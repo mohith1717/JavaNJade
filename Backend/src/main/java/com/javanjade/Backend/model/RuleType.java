@@ -1,0 +1,11 @@
+package com.javanjade.Backend.model;
+
+public enum RuleType {
+    HIGH_VALUE_TRANSFER,
+    BLACKLISTED_RECEIVER,
+    HIGH_FREQUENCY,
+    CROSS_BORDER_ORIGIN,
+    ANOMALOUS_CREDIT_SCORE,
+    STRUCTURING_SMURFING,
+    CONSECUTIVE_FAILURES
+}
