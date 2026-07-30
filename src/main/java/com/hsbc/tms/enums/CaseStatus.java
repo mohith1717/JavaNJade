@@ -2,8 +2,8 @@ package com.hsbc.tms.enums;
 
 public enum CaseStatus {
     OPEN,
-     ASSIGNED,
+    ASSIGNED,
+    IN_REVIEW,
     RESOLVED,
-
-    CLOSED
+    CLOSED;
 }

@@ -976,3 +976,16 @@ Hibernate: delete from transactions where transaction_id=?
 2026-07-30T08:45:26.144Z DEBUG 17556 --- [transaction-monitoring-system] [nio-8081-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
 2026-07-30T08:45:26.147Z DEBUG 17556 --- [transaction-monitoring-system] [nio-8081-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Nothing to write: null body
 2026-07-30T08:45:26.149Z DEBUG 17556 --- [transaction-monitoring-system] [nio-8081-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 204 NO_CONTENT
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  43:13 min
+[INFO] Finished at: 2026-07-30T09:27:49Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:4.1.0:run (default-cli) on project transaction-monitoring-system: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
