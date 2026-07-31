@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class TransactionService {
@@ -24,9 +22,8 @@ public class TransactionService {
         if (transactionRepository.existsByExternalTransactionId(
                 request.externalTransactionId()
         )) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "A transaction with this external ID already exists"
+            throw new DuplicateTransactionException(
+                    request.externalTransactionId()
             );
         }
 
@@ -38,9 +35,9 @@ public class TransactionService {
                 request.amount(),
                 request.currency().toUpperCase(Locale.ROOT),
                 request.occurredAt(),
-                "RECEIVED",
-                0,
-                "LOW",
+                ProcessingStatus.RECEIVED,
+                null,
+                RiskLevel.PENDING,
                 Instant.now()
         );
 
@@ -55,9 +52,8 @@ public class TransactionService {
     @Transactional(readOnly = true)
     public TransactionEntity getTransaction(UUID transactionId) {
         return transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Transaction not found"
+                .orElseThrow(() -> new TransactionNotFoundException(
+                        transactionId
                 ));
     }
 }

@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -39,13 +41,15 @@ public class TransactionEntity {
     private Instant occurredAt;
 
     @Column(name = "processing_status", nullable = false)
-    private String processingStatus;
+    @Enumerated(EnumType.STRING)
+    private ProcessingStatus processingStatus;
 
-    @Column(name = "risk_score", nullable = false)
-    private int riskScore;
+    @Column(name = "risk_score")
+    private Integer riskScore;
 
     @Column(name = "risk_level", nullable = false)
-    private String riskLevel;
+    @Enumerated(EnumType.STRING)
+    private RiskLevel riskLevel;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -61,9 +65,9 @@ public class TransactionEntity {
             BigDecimal amount,
             String currency,
             Instant occurredAt,
-            String processingStatus,
-            int riskScore,
-            String riskLevel,
+            ProcessingStatus processingStatus,
+            Integer riskScore,
+            RiskLevel riskLevel,
             Instant createdAt
     ) {
         this.id = id;
@@ -86,8 +90,8 @@ public class TransactionEntity {
     public BigDecimal getAmount() { return amount; }
     public String getCurrency() { return currency; }
     public Instant getOccurredAt() { return occurredAt; }
-    public String getProcessingStatus() { return processingStatus; }
-    public int getRiskScore() { return riskScore; }
-    public String getRiskLevel() { return riskLevel; }
+    public ProcessingStatus getProcessingStatus() { return processingStatus; }
+    public Integer getRiskScore() { return riskScore; }
+    public RiskLevel getRiskLevel() { return riskLevel; }
     public Instant getCreatedAt() { return createdAt; }
 }
