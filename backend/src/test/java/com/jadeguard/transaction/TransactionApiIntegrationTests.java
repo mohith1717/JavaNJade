@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.jadeguard.validation.TransactionValidationErrorRepository;
@@ -360,6 +362,104 @@ class TransactionApiIntegrationTests {
                         .value("VALIDATED"))
                 .andExpect(jsonPath("$.riskScore").doesNotExist())
                 .andExpect(jsonPath("$.riskLevel").value("PENDING"));
+    }
+
+    @Test
+    void fundFlowReturnsVisualizationReadyCountryJourney()
+            throws Exception {
+        String transactionId = createAndReadId("""
+                {
+                  "externalTransactionId": "TXN-FLOW-001",
+                  "senderAccountId": "ACC-001",
+                  "receiverAccountId": "ACC-002",
+                  "amount": 250000,
+                  "currency": "INR",
+                  "occurredAt": "2026-07-31T08:30:00Z",
+                  "route": [
+                    {
+                      "sequence": 1,
+                      "countryCode": "IN",
+                      "institution": "Origin Bank"
+                    },
+                    {
+                      "sequence": 2,
+                      "countryCode": "AE",
+                      "institution": "Intermediary Bank"
+                    },
+                    {
+                      "sequence": 3,
+                      "countryCode": "GB",
+                      "institution": "Destination Bank"
+                    }
+                  ]
+                }
+                """);
+
+        mockMvc.perform(get(
+                        "/api/transactions/{id}/fund-flow",
+                        transactionId
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactionId")
+                        .value(transactionId))
+                .andExpect(jsonPath("$.externalTransactionId")
+                        .value("TXN-FLOW-001"))
+                .andExpect(jsonPath("$.amount").value(250000))
+                .andExpect(jsonPath("$.currency").value("INR"))
+                .andExpect(jsonPath("$.processingStatus")
+                        .value("VALIDATED"))
+                .andExpect(jsonPath("$.riskScore").doesNotExist())
+                .andExpect(jsonPath("$.riskLevel").value("PENDING"))
+                .andExpect(jsonPath("$.originCountry.countryCode")
+                        .value("IN"))
+                .andExpect(jsonPath("$.originCountry.countryName")
+                        .value("India"))
+                .andExpect(jsonPath("$.destinationCountry.countryCode")
+                        .value("GB"))
+                .andExpect(jsonPath("$.destinationCountry.countryName")
+                        .value("United Kingdom"))
+                .andExpect(jsonPath("$.totalHops").value(3))
+                .andExpect(jsonPath("$.route[0].hopType")
+                        .value("ORIGIN"))
+                .andExpect(jsonPath("$.route[1].hopType")
+                        .value("INTERMEDIARY"))
+                .andExpect(jsonPath("$.route[1].countryName")
+                        .value("United Arab Emirates"))
+                .andExpect(jsonPath("$.route[2].hopType")
+                        .value("DESTINATION"))
+                .andExpect(jsonPath("$.route[2].institution")
+                        .value("Destination Bank"));
+    }
+
+    @Test
+    void fundFlowHandlesLegacyTransactionWithoutRoute()
+            throws Exception {
+        UUID transactionId = UUID.randomUUID();
+        transactionRepository.save(new TransactionEntity(
+                transactionId,
+                "TXN-LEGACY-001",
+                "ACC-001",
+                "ACC-002",
+                new BigDecimal("1000.00"),
+                "INR",
+                Instant.parse("2026-07-31T08:30:00Z"),
+                ProcessingStatus.RECEIVED,
+                null,
+                RiskLevel.PENDING,
+                Instant.now()
+        ));
+
+        mockMvc.perform(get(
+                        "/api/transactions/{id}/fund-flow",
+                        transactionId
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactionId")
+                        .value(transactionId.toString()))
+                .andExpect(jsonPath("$.totalHops").value(0))
+                .andExpect(jsonPath("$.originCountry").doesNotExist())
+                .andExpect(jsonPath("$.destinationCountry").doesNotExist())
+                .andExpect(jsonPath("$.route").isEmpty());
     }
 
     private String createAndReadId(String body) throws Exception {

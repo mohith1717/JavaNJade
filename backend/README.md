@@ -33,6 +33,7 @@ GET  http://localhost:8080/api/transactions
 GET  http://localhost:8080/api/transactions?processingStatus=VALIDATION_FAILED
 GET  http://localhost:8080/api/transactions/{transactionId}
 GET  http://localhost:8080/api/transactions/{transactionId}/route
+GET  http://localhost:8080/api/transactions/{transactionId}/fund-flow
 GET  http://localhost:8080/api/transactions/{transactionId}/validation-errors
 GET  http://localhost:8080/api/validation-errors
 GET  http://localhost:8080/api/validation-errors/{validationErrorId}
@@ -45,6 +46,12 @@ The validation-error list supports:
 GET /api/validation-errors?transactionId={transactionId}
 GET /api/validation-errors?errorCode=UNSUPPORTED_CURRENCY
 ```
+
+The read-only `fund-flow` endpoint prepares the stored route for frontend
+visualization. It includes the transaction summary, origin and destination
+country names, total hop count, and ordered `ORIGIN`, `INTERMEDIARY`, and
+`DESTINATION` hops. The raw `route` endpoint remains available for inspecting
+the persisted route records.
 
 Use this JSON body for the POST request:
 
