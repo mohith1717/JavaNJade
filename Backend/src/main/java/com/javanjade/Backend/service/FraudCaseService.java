@@ -9,6 +9,7 @@ import com.javanjade.Backend.model.TransactionRecord;
 import com.javanjade.Backend.repository.FraudCaseRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +55,31 @@ public class FraudCaseService {
 
     public CaseViewResponse getByAlertId(String alertId) {
         return toResponse(findCase(alertId));
+    }
+
+    public FraudCase getCaseEntityByAlertId(String alertId) {
+        return findCase(alertId);
+    }
+
+    public List<CaseViewResponse> listByAssignee(String assignee) {
+        return fraudCaseRepository.findByAssignedToOrderByPriorityDescCreatedAtAsc(assignee).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public List<CaseViewResponse> listOperationalQueue() {
+        Set<CaseStatus> active = Set.of(CaseStatus.OPEN, CaseStatus.ASSIGNED, CaseStatus.INVESTIGATE);
+        return fraudCaseRepository.findAll().stream()
+                .filter(fraudCase -> active.contains(fraudCase.getStatus()))
+                .sorted((left, right) -> {
+                    int priorityCompare = right.getPriority().compareTo(left.getPriority());
+                    if (priorityCompare != 0) {
+                        return priorityCompare;
+                    }
+                    return left.getCreatedAt().compareTo(right.getCreatedAt());
+                })
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional

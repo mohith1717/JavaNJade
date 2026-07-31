@@ -1,5 +1,6 @@
 package com.javanjade.Backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public record TransactionProcessRequest(
+        @JsonAlias("tid")
         @NotBlank @Size(max = 64) String transactionId,
         @NotNull @DecimalMin("0.01") BigDecimal amount,
         @NotBlank @Size(max = 8) String currency,
