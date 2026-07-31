@@ -20,9 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final FundFlowService fundFlowService;
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(
+            TransactionService transactionService,
+            FundFlowService fundFlowService
+    ) {
         this.transactionService = transactionService;
+        this.fundFlowService = fundFlowService;
     }
 
     @PostMapping
@@ -53,6 +58,13 @@ public class TransactionController {
             @PathVariable UUID transactionId
     ) {
         return transactionService.getTransactionRoute(transactionId);
+    }
+
+    @GetMapping("/{transactionId}/fund-flow")
+    public FundFlowResponse getFundFlow(
+            @PathVariable UUID transactionId
+    ) {
+        return fundFlowService.getFundFlow(transactionId);
     }
 
     @GetMapping("/{transactionId}/validation-errors")
