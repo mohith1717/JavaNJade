@@ -14,6 +14,8 @@ public interface TransactionRecordRepository extends JpaRepository<TransactionRe
 
     Optional<TransactionRecord> findByTid(String tid);
 
+    List<TransactionRecord> findAllByOrderByCreatedAtDesc();
+
     boolean existsByTid(String tid);
 
     List<TransactionRecord> findBySenderAccountIdOrderByCreatedAtDesc(String senderAccountId);

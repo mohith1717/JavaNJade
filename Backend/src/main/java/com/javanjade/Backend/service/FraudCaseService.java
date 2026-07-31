@@ -89,6 +89,16 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse assign(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.OPEN) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                "Case must be OPEN before assignment",
+                HttpStatus.BAD_REQUEST);
+        }
+        if (request.assignee() == null || request.assignee().isBlank()) {
+            throw new BusinessException("ASSIGNEE_REQUIRED",
+                "Assignee is required to assign a case",
+                HttpStatus.BAD_REQUEST);
+        }
         fraudCase.setAssignedTo(request.assignee());
         fraudCase.setStatus(CaseStatus.ASSIGNED);
         auditLogService.append("CASE", alertId, "CASE_ASSIGNED", request.actor(),
@@ -99,6 +109,12 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse investigate(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.ASSIGNED) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                "Case must be ASSIGNED before investigation",
+                HttpStatus.BAD_REQUEST);
+        }
+        enforceAssignedInvestigator(fraudCase, request.actor());
         fraudCase.setStatus(CaseStatus.INVESTIGATE);
         auditLogService.append("CASE", alertId, "CASE_INVESTIGATE", request.actor(),
                 "Investigation started. notes=" + nullSafe(request.notes()));
@@ -108,6 +124,12 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse resolve(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.INVESTIGATE) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                    "Case must be in INVESTIGATE state before resolution",
+                    HttpStatus.BAD_REQUEST);
+        }
+        enforceAssignedInvestigator(fraudCase, request.actor());
         fraudCase.setStatus(request.clean() ? CaseStatus.CLEAN : CaseStatus.RESOLVED);
         auditLogService.append("CASE", alertId, "CASE_RESOLVED", request.actor(),
                 "Outcome=" + fraudCase.getStatus() + ", notes=" + nullSafe(request.notes()));
@@ -182,5 +204,18 @@ public class FraudCaseService {
 
     private String nullSafe(String text) {
         return text == null ? "" : text;
+    }
+
+    private void enforceAssignedInvestigator(FraudCase fraudCase, String actor) {
+        if (fraudCase.getAssignedTo() == null || fraudCase.getAssignedTo().isBlank()) {
+            throw new BusinessException("CASE_NOT_ASSIGNED",
+                    "Case is not assigned to any investigator",
+                    HttpStatus.BAD_REQUEST);
+        }
+        if (!fraudCase.getAssignedTo().equalsIgnoreCase(actor)) {
+            throw new BusinessException("ASSIGNEE_MISMATCH",
+                    "Only the assigned investigator can perform this action",
+                    HttpStatus.FORBIDDEN);
+        }
     }
 }

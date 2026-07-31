@@ -3,6 +3,8 @@ package com.javanjade.Backend.service;
 import com.javanjade.Backend.model.AuditLogEvent;
 import com.javanjade.Backend.repository.AuditLogEventRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuditLogService {
@@ -13,6 +15,7 @@ public class AuditLogService {
         this.auditLogEventRepository = auditLogEventRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void append(String entityType, String entityId, String action, String actor, String details) {
         AuditLogEvent event = new AuditLogEvent();
         event.setEntityType(entityType);

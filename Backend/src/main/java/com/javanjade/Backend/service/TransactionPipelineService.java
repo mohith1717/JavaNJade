@@ -38,7 +38,17 @@ public class TransactionPipelineService {
 
     @Transactional
     public TransactionDecisionResponse process(TransactionProcessRequest request) {
-        validationService.validate(request);
+                try {
+                        validationService.validate(request);
+                } catch (BusinessException exception) {
+                        auditLogService.append(
+                                        "TRANSACTION",
+                                        safeTransactionId(request.transactionId()),
+                                        "TRANSACTION_VALIDATION_FAILED",
+                                        "system",
+                                        "code=" + exception.getCode() + ", message=" + exception.getMessage());
+                        throw exception;
+                }
 
         var triggeredRules = ruleEngineService.evaluate(request);
         var evaluation = riskEvaluationService.evaluate(triggeredRules);
@@ -92,5 +102,12 @@ public class TransactionPipelineService {
                         return false;
                 }
                 return !request.senderCountry().equalsIgnoreCase(request.receiverCountry());
+        }
+
+        private String safeTransactionId(String transactionId) {
+                if (transactionId == null || transactionId.isBlank()) {
+                        return "UNKNOWN";
+                }
+                return transactionId;
         }
 }
