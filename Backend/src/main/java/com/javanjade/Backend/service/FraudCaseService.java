@@ -32,7 +32,11 @@ public class FraudCaseService {
         fraudCase.setTransaction(transaction);
         fraudCase.setRiskScore(transaction.getRiskScore());
         fraudCase.setPrimaryReason(transaction.getPrimaryReason());
-        fraudCase.setPriority(mapPriority(transaction.getRiskScore()));
+        CasePriority computedPriority = mapPriority(transaction.getRiskScore());
+        if (isCrossCountryPayment(transaction)) {
+            computedPriority = CasePriority.CRITICAL;
+        }
+        fraudCase.setPriority(computedPriority);
         fraudCase.setStatus(CaseStatus.OPEN);
         fraudCase.setSlaDeadline(defaultSlaByPriority(fraudCase.getPriority()));
         FraudCase saved = fraudCaseRepository.save(fraudCase);
@@ -157,6 +161,13 @@ public class FraudCaseService {
             return CasePriority.MEDIUM;
         }
         return CasePriority.LOW;
+    }
+
+    private boolean isCrossCountryPayment(TransactionRecord transaction) {
+        if (transaction.getSenderCountry() == null || transaction.getReceiverCountry() == null) {
+            return false;
+        }
+        return !transaction.getSenderCountry().equalsIgnoreCase(transaction.getReceiverCountry());
     }
 
     private LocalDateTime defaultSlaByPriority(CasePriority priority) {

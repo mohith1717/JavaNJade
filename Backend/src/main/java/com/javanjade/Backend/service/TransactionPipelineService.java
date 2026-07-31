@@ -68,8 +68,8 @@ public class TransactionPipelineService {
                 "decision=" + decision + ", riskScore=" + evaluation.riskScore()
                         + ", reason=" + evaluation.primaryReason());
 
-        FraudCase fraudCase = null;
-        if (decision == TransactionStatus.DENIED || evaluation.riskScore() >= 45) {
+                FraudCase fraudCase = null;
+                if (decision == TransactionStatus.DENIED || evaluation.riskScore() >= 45 || isCrossCountry(request)) {
             fraudCase = fraudCaseService.createCaseForTransaction(saved);
         }
 
@@ -86,4 +86,11 @@ public class TransactionPipelineService {
                 fraudCase != null ? fraudCase.getPriority() : null
         );
     }
+
+        private boolean isCrossCountry(TransactionProcessRequest request) {
+                if (request.senderCountry() == null || request.receiverCountry() == null) {
+                        return false;
+                }
+                return !request.senderCountry().equalsIgnoreCase(request.receiverCountry());
+        }
 }
