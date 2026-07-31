@@ -1,39 +1,55 @@
 # JadeGuard Backend
 
-Spring Boot modular monolith. Business code is grouped by feature rather than
-by one global controllers/services/repositories hierarchy.
+## Start in three steps
 
-## Run
+### 1. Start MySQL
 
-Start MySQL from the repository root:
+From the repository root:
 
 ```bash
 docker compose up -d mysql
 ```
 
-The local JDBC connection uses port `3307`; Docker maps it to MySQL's internal
-port `3306`.
-
-Then:
+### 2. Start the backend
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-- Health: <http://localhost:8080/api/v1/system/health>
-- Actuator: <http://localhost:8080/actuator/health>
-- Swagger UI: <http://localhost:8080/swagger-ui.html>
+### 3. Test a GET request
 
-## Package responsibilities
+Open this URL in Postman or a browser:
 
-| Package | Responsibility |
-|---|---|
-| `transaction` | Ingestion, validation coordination, history, and route hops |
-| `validation` | Baseline viability checks |
-| `rule` | Configurable rule definitions and evaluation strategies |
-| `risk` | Risk aggregation and explainable score factors |
-| `alert` | Alert creation, lifecycle, and analyst decisions |
-| `audit` | Append-only user and system events |
-| `dashboard` | Read-only operational summaries |
-| `common` | Cross-cutting API/error configuration only |
+```text
+http://localhost:8080/api
+```
+
+## Simple transaction API
+
+```text
+GET  http://localhost:8080/api/health
+GET  http://localhost:8080/api/transactions
+GET  http://localhost:8080/api/transactions/{transactionId}
+POST http://localhost:8080/api/transactions
+```
+
+Use this JSON body for the POST request:
+
+```json
+{
+  "externalTransactionId": "TXN-1001",
+  "senderAccountId": "ACC-001",
+  "receiverAccountId": "ACC-002",
+  "amount": 5000,
+  "currency": "INR",
+  "occurredAt": "2026-07-30T08:30:00Z"
+}
+```
+
+The POST response contains an `id`. Copy that value into the final GET URL,
+without the `{}` characters.
+
+Swagger also provides clickable API testing:
+
+<http://localhost:8080/swagger-ui.html>

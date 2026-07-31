@@ -15,4 +15,14 @@ class JadeGuardApplicationTests {
                 .containsEntry("service", "jadeguard-backend")
                 .containsEntry("status", "UP");
     }
+
+    @Test
+    void apiRootListsAvailableEndpoints() {
+        var response = new SystemController().apiHome();
+
+        assertThat(response)
+                .containsEntry("name", "JadeGuard API")
+                .containsEntry("status", "UP")
+                .containsEntry("transactions", "/api/transactions");
+    }
 }
