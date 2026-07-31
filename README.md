@@ -20,11 +20,11 @@ Before implementation, the team should review and agree on the
 [project baseline](docs/PROJECT_BASELINE.md). It defines the initial technology
 stack, API contract, data model, alert lifecycle, Git workflow, and first demo.
 
-The first milestone is intentionally small:
+The current backend milestone provides explainable transaction validation:
 
-> Submit a transaction, validate and store it, evaluate one amount-threshold
-> rule, calculate an explainable risk score, generate an alert, let an analyst
-> close it, and record the complete audit history.
+> Submit a transaction and country route, store them in MySQL, validate the
+> transaction, and expose clear failure explanations to analysts. Valid
+> transactions finish ready for the next risk-assessment stage.
 
 Architecture details are recorded in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -63,10 +63,11 @@ npm run dev
 Open:
 
 - Frontend: <http://localhost:5173>
-- Backend health: <http://localhost:8080/api/v1/system/health>
+- API home: <http://localhost:8080/api>
+- Backend health: <http://localhost:8080/api/health>
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
 
-The generator currently supports dry-run scenarios:
+The generator supports both preview and API submission scenarios:
 
 ```bash
 cd generator
@@ -74,10 +75,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python generate.py high_amount --dry-run
+python generate.py high_amount
 ```
 
-Submitting generated transactions without `--dry-run` will work after the first
-transaction-ingestion feature is implemented.
+For backend-only development and Postman testing, the frontend does not need to
+be started. The basic transaction URLs are documented in
+[backend/README.md](backend/README.md).
 
 ## Development order
 

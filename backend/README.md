@@ -30,8 +30,20 @@ http://localhost:8080/api
 ```text
 GET  http://localhost:8080/api/health
 GET  http://localhost:8080/api/transactions
+GET  http://localhost:8080/api/transactions?processingStatus=VALIDATION_FAILED
 GET  http://localhost:8080/api/transactions/{transactionId}
+GET  http://localhost:8080/api/transactions/{transactionId}/route
+GET  http://localhost:8080/api/transactions/{transactionId}/validation-errors
+GET  http://localhost:8080/api/validation-errors
+GET  http://localhost:8080/api/validation-errors/{validationErrorId}
 POST http://localhost:8080/api/transactions
+```
+
+The validation-error list supports:
+
+```text
+GET /api/validation-errors?transactionId={transactionId}
+GET /api/validation-errors?errorCode=UNSUPPORTED_CURRENCY
 ```
 
 Use this JSON body for the POST request:
@@ -43,7 +55,19 @@ Use this JSON body for the POST request:
   "receiverAccountId": "ACC-002",
   "amount": 5000,
   "currency": "INR",
-  "occurredAt": "2026-07-30T08:30:00Z"
+  "occurredAt": "2026-07-30T08:30:00Z",
+  "route": [
+    {
+      "sequence": 1,
+      "countryCode": "IN",
+      "institution": "Origin Bank"
+    },
+    {
+      "sequence": 2,
+      "countryCode": "GB",
+      "institution": "Destination Bank"
+    }
+  ]
 }
 ```
 
@@ -54,14 +78,17 @@ New transactions have not been risk-assessed yet, so they start with:
 
 ```json
 {
-  "processingStatus": "RECEIVED",
+  "processingStatus": "VALIDATED",
   "riskScore": null,
   "riskLevel": "PENDING"
 }
 ```
 
-Risk values are assigned later by the rule and risk engines; clients cannot set
-them in the POST request.
+Valid transactions finish as `VALIDATED` and are ready for the Step 3 rule
+engine. Business-invalid transactions remain stored as `VALIDATION_FAILED`,
+with explanations available through their validation-error endpoint. Risk
+values are assigned later by the rule and risk engines; clients cannot set them
+in the POST request.
 
 Errors use one consistent shape. For example, a duplicate external transaction
 ID returns `409 Conflict`:

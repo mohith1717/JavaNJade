@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.jadeguard.transaction.DuplicateTransactionException;
 import com.jadeguard.transaction.TransactionNotFoundException;
+import com.jadeguard.validation.ValidationErrorNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(TransactionNotFoundException.class)
+    @ExceptionHandler({
+            TransactionNotFoundException.class,
+            ValidationErrorNotFoundException.class
+    })
     public ResponseEntity<ApiError> handleNotFound(
-            TransactionNotFoundException exception,
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return error(

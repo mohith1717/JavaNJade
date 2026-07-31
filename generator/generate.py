@@ -19,6 +19,25 @@ SCENARIOS = {
         "amount": 250_000.00,
         "receiverAccountId": "ACC-901",
     },
+    "unsupported_currency": {
+        "amount": 5_000.00,
+        "receiverAccountId": "ACC-902",
+        "currency": "XYZ",
+    },
+    "same_account": {
+        "amount": 5_000.00,
+        "receiverAccountId": "ACC-001",
+    },
+    "invalid_country": {
+        "amount": 5_000.00,
+        "receiverAccountId": "ACC-903",
+        "destinationCountryCode": "ZZ",
+    },
+    "invalid_route_sequence": {
+        "amount": 5_000.00,
+        "receiverAccountId": "ACC-904",
+        "destinationSequence": 3,
+    },
 }
 
 
@@ -29,7 +48,7 @@ def transaction_for(scenario_name: str) -> dict:
         "senderAccountId": "ACC-001",
         "receiverAccountId": scenario["receiverAccountId"],
         "amount": scenario["amount"],
-        "currency": "INR",
+        "currency": scenario.get("currency", "INR"),
         "occurredAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "route": [
             {
@@ -38,13 +57,8 @@ def transaction_for(scenario_name: str) -> dict:
                 "institution": "Origin Bank",
             },
             {
-                "sequence": 2,
-                "countryCode": "AE",
-                "institution": "Intermediary Bank",
-            },
-            {
-                "sequence": 3,
-                "countryCode": "GB",
+                "sequence": scenario.get("destinationSequence", 2),
+                "countryCode": scenario.get("destinationCountryCode", "GB"),
                 "institution": "Destination Bank",
             },
         ],
@@ -56,7 +70,7 @@ def main() -> int:
     parser.add_argument("scenario", choices=SCENARIOS, help="Scenario to submit")
     parser.add_argument(
         "--api-url",
-        default=os.getenv("JADEGUARD_API_URL", "http://localhost:8080/api/v1"),
+        default=os.getenv("JADEGUARD_API_URL", "http://localhost:8080/api"),
     )
     parser.add_argument(
         "--dry-run",

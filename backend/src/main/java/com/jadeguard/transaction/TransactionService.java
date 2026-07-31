@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.jadeguard.validation.TransactionValidationErrorEntity;
+import com.jadeguard.validation.TransactionValidationErrorRepository;
+import com.jadeguard.validation.TransactionValidationService;
+import com.jadeguard.validation.ValidationErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final TransactionRouteHopRepository routeHopRepository;
+    private final TransactionValidationService validationService;
+    private final TransactionValidationErrorRepository validationErrorRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(
+            TransactionRepository transactionRepository,
+            TransactionRouteHopRepository routeHopRepository,
+            TransactionValidationService validationService,
+            TransactionValidationErrorRepository validationErrorRepository
+    ) {
         this.transactionRepository = transactionRepository;
+        this.routeHopRepository = routeHopRepository;
+        this.validationService = validationService;
+        this.validationErrorRepository = validationErrorRepository;
     }
 
     @Transactional
@@ -41,12 +56,61 @@ public class TransactionService {
                 Instant.now()
         );
 
+        transactionRepository.saveAndFlush(transaction);
+        transaction.markValidating();
+
+        var validationResult = validationService.validate(
+                transaction,
+                request.route()
+        );
+
+        boolean routeHasDuplicateSequence = validationResult.errors().stream()
+                .anyMatch(error -> error.code()
+                        == ValidationErrorCode.DUPLICATE_ROUTE_SEQUENCE);
+
+        if (!routeHasDuplicateSequence) {
+            routeHopRepository.saveAll(request.route().stream()
+                    .map(hop -> new TransactionRouteHopEntity(
+                            UUID.randomUUID(),
+                            transaction.getId(),
+                            hop.sequence(),
+                            hop.countryCode().toUpperCase(Locale.ROOT),
+                            hop.institution()
+                    ))
+                    .toList());
+        }
+
+        if (validationResult.valid()) {
+            transaction.markValidated();
+        } else {
+            transaction.markValidationFailed();
+            Instant validationTime = Instant.now();
+            validationErrorRepository.saveAll(
+                    validationResult.errors().stream()
+                            .map(error -> new TransactionValidationErrorEntity(
+                                    UUID.randomUUID(),
+                                    transaction.getId(),
+                                    error.code(),
+                                    error.field(),
+                                    error.message(),
+                                    validationTime
+                            ))
+                            .toList()
+            );
+        }
+
         return transactionRepository.save(transaction);
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionEntity> getAllTransactions() {
-        return transactionRepository.findAllByOrderByCreatedAtDesc();
+    public List<TransactionEntity> getAllTransactions(
+            ProcessingStatus processingStatus
+    ) {
+        if (processingStatus == null) {
+            return transactionRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return transactionRepository
+                .findByProcessingStatusOrderByCreatedAtDesc(processingStatus);
     }
 
     @Transactional(readOnly = true)
@@ -55,5 +119,23 @@ public class TransactionService {
                 .orElseThrow(() -> new TransactionNotFoundException(
                         transactionId
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionRouteHopEntity> getTransactionRoute(
+            UUID transactionId
+    ) {
+        getTransaction(transactionId);
+        return routeHopRepository
+                .findByTransactionIdOrderBySequenceAsc(transactionId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionValidationErrorEntity> getValidationErrors(
+            UUID transactionId
+    ) {
+        getTransaction(transactionId);
+        return validationErrorRepository
+                .findByTransactionIdOrderByCreatedAtAsc(transactionId);
     }
 }

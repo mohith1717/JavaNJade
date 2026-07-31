@@ -94,4 +94,16 @@ public class TransactionEntity {
     public Integer getRiskScore() { return riskScore; }
     public RiskLevel getRiskLevel() { return riskLevel; }
     public Instant getCreatedAt() { return createdAt; }
+
+    public void markValidating() {
+        processingStatus = ProcessingStatus.VALIDATING;
+    }
+
+    public void markValidated() {
+        processingStatus = ProcessingStatus.VALIDATED;
+    }
+
+    public void markValidationFailed() {
+        processingStatus = ProcessingStatus.VALIDATION_FAILED;
+    }
 }
