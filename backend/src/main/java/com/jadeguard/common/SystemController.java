@@ -17,6 +17,7 @@ public class SystemController {
                 "name", "JadeGuard API",
                 "status", "UP",
                 "transactions", "/api/transactions",
+                "rules", "/api/rules",
                 "validationErrors", "/api/validation-errors",
                 "health", "/api/health"
         );

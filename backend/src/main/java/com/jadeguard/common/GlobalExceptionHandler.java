@@ -4,6 +4,9 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.jadeguard.rule.DuplicateRuleCodeException;
+import com.jadeguard.rule.RuleConfigurationException;
+import com.jadeguard.rule.RuleNotFoundException;
 import com.jadeguard.transaction.DuplicateTransactionException;
 import com.jadeguard.transaction.TransactionNotFoundException;
 import com.jadeguard.validation.ValidationErrorNotFoundException;
@@ -22,7 +25,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             TransactionNotFoundException.class,
-            ValidationErrorNotFoundException.class
+            ValidationErrorNotFoundException.class,
+            RuleNotFoundException.class
     })
     public ResponseEntity<ApiError> handleNotFound(
             RuntimeException exception,
@@ -36,9 +40,12 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(DuplicateTransactionException.class)
+    @ExceptionHandler({
+            DuplicateTransactionException.class,
+            DuplicateRuleCodeException.class
+    })
     public ResponseEntity<ApiError> handleDuplicate(
-            DuplicateTransactionException exception,
+            RuntimeException exception,
             HttpServletRequest request
     ) {
         return error(
@@ -46,6 +53,19 @@ public class GlobalExceptionHandler {
                 exception.getMessage(),
                 request.getRequestURI(),
                 Map.of()
+        );
+    }
+
+    @ExceptionHandler(RuleConfigurationException.class)
+    public ResponseEntity<ApiError> handleRuleConfiguration(
+            RuleConfigurationException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                exception.getFieldErrors()
         );
     }
 

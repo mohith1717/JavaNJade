@@ -37,7 +37,11 @@ GET  http://localhost:8080/api/transactions/{transactionId}/fund-flow
 GET  http://localhost:8080/api/transactions/{transactionId}/validation-errors
 GET  http://localhost:8080/api/validation-errors
 GET  http://localhost:8080/api/validation-errors/{validationErrorId}
+GET  http://localhost:8080/api/rules
 POST http://localhost:8080/api/transactions
+POST http://localhost:8080/api/rules
+PUT  http://localhost:8080/api/rules/{ruleId}
+PATCH http://localhost:8080/api/rules/{ruleId}/status
 ```
 
 The validation-error list supports:
@@ -52,6 +56,10 @@ visualization. It includes the transaction summary, origin and destination
 country names, total hop count, and ordered `ORIGIN`, `INTERMEDIARY`, and
 `DESTINATION` hops. The raw `route` endpoint remains available for inspecting
 the persisted route records.
+
+Rule-management requests and the supported JSON parameter formats are documented
+in [the rule-management guide](../docs/RULE_MANAGEMENT.md). Step 4 stores and
+manages rule configurations; transaction evaluation begins in Step 5.
 
 Use this JSON body for the POST request:
 
