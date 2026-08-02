@@ -60,6 +60,8 @@ the persisted route records.
 Rule-management requests and the supported JSON parameter formats are documented
 in [the rule-management guide](../docs/RULE_MANAGEMENT.md). Step 4 stores and
 manages rule configurations; transaction evaluation begins in Step 5.
+Flyway V5 supplies one shared default configuration for each supported rule
+type while preserving any existing rule with the same code.
 
 Use this JSON body for the POST request:
 

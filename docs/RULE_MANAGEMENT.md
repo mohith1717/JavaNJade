@@ -3,6 +3,23 @@
 Step 4 lets administrators configure monitoring rules without editing Java
 source. It does not evaluate transactions or assign risk scores yet.
 
+## Default rules
+
+Flyway creates these shared defaults so every team member begins with the same
+configuration:
+
+| Code | Type | Initial configuration |
+|---|---|---|
+| `HIGH_AMOUNT_INR` | `HIGH_AMOUNT` | INR greater than 200,000 |
+| `ROUTE_COUNTRY_WATCHLIST` | `HIGH_RISK_COUNTRY` | Configured country in any route hop |
+| `EXCESSIVE_ROUTE_HOPS` | `EXCESSIVE_ROUTE_HOPS` | More than four hops |
+| `RAPID_SENDER_ACTIVITY` | `RAPID_TRANSACTIONS` | More than five transactions in ten minutes |
+| `INR_STRUCTURING` | `STRUCTURING` | Split-payment pattern within thirty minutes |
+
+V5 inserts a default only when its code does not already exist, preserving an
+administrator's existing configuration. The route-country list is illustrative
+project configuration and must not be treated as a live legal sanctions source.
+
 ## Endpoints
 
 ```text
@@ -73,7 +90,7 @@ listed jurisdiction has the same legal classification.
 
 ```json
 {
-  "code": "TOO_MANY_ROUTE_HOPS",
+  "code": "EXCESSIVE_ROUTE_HOPS",
   "name": "More than four route hops",
   "type": "EXCESSIVE_ROUTE_HOPS",
   "enabled": true,
