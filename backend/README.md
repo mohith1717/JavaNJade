@@ -25,6 +25,16 @@ Open this URL in Postman or a browser:
 http://localhost:8080/api
 ```
 
+Operational APIs now require a JWT. Login with one of the development users in
+[the security guide](../docs/SECURITY.md), copy `accessToken`, and send
+`Authorization: Bearer {accessToken}` in Postman. Flyway V8 creates the user
+table and BCrypt-hashed development accounts.
+
+```text
+POST http://localhost:8080/api/auth/login
+GET  http://localhost:8080/api/auth/me
+```
+
 ## Simple transaction API
 
 ```text

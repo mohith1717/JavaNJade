@@ -2,6 +2,8 @@ package com.jadeguard.common;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,9 +12,18 @@ public class OpenApiConfiguration {
 
     @Bean
     OpenAPI jadeGuardOpenApi() {
-        return new OpenAPI().info(new Info()
-                .title("JadeGuard API")
-                .version("v1")
-                .description("Transaction monitoring and fraud alert case management API"));
+        return new OpenAPI()
+                .info(new Info()
+                        .title("JadeGuard API")
+                        .version("v1")
+                        .description("Transaction monitoring and fraud alert case management API"))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .schemaRequirement(
+                        "bearerAuth",
+                        new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                );
     }
 }
