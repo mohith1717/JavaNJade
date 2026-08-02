@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.jadeguard.rule.DuplicateRuleCodeException;
+import com.jadeguard.risk.RiskAssessmentNotAvailableException;
 import com.jadeguard.rule.RuleConfigurationException;
 import com.jadeguard.rule.RuleNotFoundException;
 import com.jadeguard.transaction.DuplicateTransactionException;
@@ -46,6 +47,19 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ApiError> handleDuplicate(
             RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(RiskAssessmentNotAvailableException.class)
+    public ResponseEntity<ApiError> handleAssessmentUnavailable(
+            RiskAssessmentNotAvailableException exception,
             HttpServletRequest request
     ) {
         return error(

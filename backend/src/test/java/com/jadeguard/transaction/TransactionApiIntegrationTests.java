@@ -72,7 +72,7 @@ class TransactionApiIntegrationTests {
     }
 
     @Test
-    void validTransactionIsStoredWithOrderedRouteAndPendingRisk()
+    void validTransactionIsStoredWithOrderedRouteAndAssessedRisk()
             throws Exception {
         var response = mockMvc.perform(post("/api/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,9 +81,9 @@ class TransactionApiIntegrationTests {
                 .andExpect(jsonPath("$.externalTransactionId")
                         .value("TXN-TEST-001"))
                 .andExpect(jsonPath("$.currency").value("INR"))
-                .andExpect(jsonPath("$.processingStatus").value("VALIDATED"))
-                .andExpect(jsonPath("$.riskScore").doesNotExist())
-                .andExpect(jsonPath("$.riskLevel").value("PENDING"))
+                .andExpect(jsonPath("$.processingStatus").value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"))
                 .andReturn();
 
         String transactionId = com.jayway.jsonpath.JsonPath.read(
@@ -349,7 +349,7 @@ class TransactionApiIntegrationTests {
     }
 
     @Test
-    void highValueTransactionStillBecomesValidated() throws Exception {
+    void highValueTransactionIsAssessedAfterValidation() throws Exception {
         String transactionId = createAndReadId(
                 VALID_TRANSACTION
                         .replace("TXN-TEST-001", "TXN-HIGH-001")
@@ -359,9 +359,9 @@ class TransactionApiIntegrationTests {
         mockMvc.perform(get("/api/transactions/{id}", transactionId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.processingStatus")
-                        .value("VALIDATED"))
-                .andExpect(jsonPath("$.riskScore").doesNotExist())
-                .andExpect(jsonPath("$.riskLevel").value("PENDING"));
+                        .value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"));
     }
 
     @Test
@@ -407,9 +407,9 @@ class TransactionApiIntegrationTests {
                 .andExpect(jsonPath("$.amount").value(250000))
                 .andExpect(jsonPath("$.currency").value("INR"))
                 .andExpect(jsonPath("$.processingStatus")
-                        .value("VALIDATED"))
-                .andExpect(jsonPath("$.riskScore").doesNotExist())
-                .andExpect(jsonPath("$.riskLevel").value("PENDING"))
+                        .value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"))
                 .andExpect(jsonPath("$.originCountry.countryCode")
                         .value("IN"))
                 .andExpect(jsonPath("$.originCountry.countryName")

@@ -13,4 +13,6 @@ public interface MonitoringRuleRepository
     boolean existsByCodeAndIdNot(String code, UUID id);
 
     List<MonitoringRuleEntity> findAllByOrderByCreatedAtDesc();
+
+    List<MonitoringRuleEntity> findByEnabledTrueOrderByCreatedAtAsc();
 }

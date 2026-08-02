@@ -142,8 +142,15 @@ listed jurisdiction has the same legal classification.
 
 `groupBy` may be `SENDER`, `SENDER_AND_RECEIVER`, or `RECEIVER`.
 
-## Step 5 handoff
+## Risk evaluation
 
-The rule engine will load enabled rules, select the evaluator matching each
-`type`, use the stored `parameters`, and record score contributions. Disabling a
-rule prevents future evaluations; it does not rewrite historical results.
+The rule engine loads enabled rules, selects the evaluator matching each
+`type`, uses the stored `parameters`, and records both triggered and
+non-triggered results. Only triggered rules contribute their configured weight.
+The total is capped at 100 and mapped to `LOW` (0–29), `MEDIUM` (30–59), `HIGH`
+(60–79), or `CRITICAL` (80–100).
+
+Valid transactions move through `VALIDATED`, `ASSESSING_RISK`, and `ASSESSED`.
+Use `GET /api/transactions/{transactionId}/risk-assessment` for the complete
+score explanation. Disabling a rule prevents future evaluations; it does not
+rewrite historical results.

@@ -106,4 +106,14 @@ public class TransactionEntity {
     public void markValidationFailed() {
         processingStatus = ProcessingStatus.VALIDATION_FAILED;
     }
+
+    public void markAssessingRisk() {
+        processingStatus = ProcessingStatus.ASSESSING_RISK;
+    }
+
+    public void markAssessed(int score, RiskLevel level) {
+        riskScore = score;
+        riskLevel = level;
+        processingStatus = ProcessingStatus.ASSESSED;
+    }
 }
