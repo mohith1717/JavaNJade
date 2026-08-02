@@ -221,7 +221,7 @@ public class AlertService {
         AlertStatus previous = alert.getStatus();
         Instant changedAt = Instant.now();
         change.run();
-        AlertEntity saved = alertRepository.save(alert);
+        AlertEntity saved = alertRepository.saveAndFlush(alert);
         recordTransition(saved, previous, target, reason, actorId, changedAt);
         return toResponse(saved);
     }

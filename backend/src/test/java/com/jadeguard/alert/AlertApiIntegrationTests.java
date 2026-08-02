@@ -82,25 +82,26 @@ class AlertApiIntegrationTests {
         performAction(alertId, "assign", """
                 {"assignedTo":"analyst-1","actorId":"lead-1",
                  "reason":"Assigning the high-risk queue"}
-                """, "ASSIGNED");
+                """, "ASSIGNED", 1);
         performAction(alertId, "start-investigation", actionBody(
                 "analyst-1", "Review started"
-        ), "INVESTIGATING");
+        ), "INVESTIGATING", 2);
         performAction(alertId, "block", actionBody(
                 "analyst-1", "Confirmed suspicious route"
-        ), "BLOCKED");
+        ), "BLOCKED", 3);
         performAction(alertId, "close", actionBody(
                 "analyst-1", "Receiver blocked and case documented"
-        ), "CLOSED");
+        ), "CLOSED", 4);
         performAction(alertId, "reopen", actionBody(
                 "lead-1", "New high-priority evidence received"
-        ), "OPEN");
+        ), "OPEN", 5);
 
         mockMvc.perform(get("/api/alerts/{id}", alertId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andExpect(jsonPath("$.assignedTo").doesNotExist())
                 .andExpect(jsonPath("$.decision").value("BLOCKED"))
+                .andExpect(jsonPath("$.version").value(5))
                 .andExpect(jsonPath("$.statusHistory.length()").value(6));
 
         org.assertj.core.api.Assertions.assertThat(auditRepository.count())
@@ -134,13 +135,15 @@ class AlertApiIntegrationTests {
             String alertId,
             String action,
             String body,
-            String expectedStatus
+            String expectedStatus,
+            int expectedVersion
     ) throws Exception {
         mockMvc.perform(post("/api/alerts/{id}/{action}", alertId, action)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(expectedStatus));
+                .andExpect(jsonPath("$.status").value(expectedStatus))
+                .andExpect(jsonPath("$.version").value(expectedVersion));
     }
 
     private void createTransaction(String externalId, int amount)
