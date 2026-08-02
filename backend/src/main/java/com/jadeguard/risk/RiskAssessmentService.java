@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.jadeguard.rule.MonitoringRuleEntity;
+import com.jadeguard.alert.AlertService;
 import com.jadeguard.rule.MonitoringRuleRepository;
 import com.jadeguard.rule.RuleType;
 import com.jadeguard.transaction.ProcessingStatus;
@@ -28,18 +29,21 @@ public class RiskAssessmentService {
     private final MonitoringRuleRepository ruleRepository;
     private final RuleEvaluationRepository evaluationRepository;
     private final Map<RuleType, RuleEvaluator> evaluators;
+    private final AlertService alertService;
 
     public RiskAssessmentService(
             TransactionRepository transactionRepository,
             TransactionRouteHopRepository routeHopRepository,
             MonitoringRuleRepository ruleRepository,
             RuleEvaluationRepository evaluationRepository,
-            List<RuleEvaluator> evaluators
+            List<RuleEvaluator> evaluators,
+            AlertService alertService
     ) {
         this.transactionRepository = transactionRepository;
         this.routeHopRepository = routeHopRepository;
         this.ruleRepository = ruleRepository;
         this.evaluationRepository = evaluationRepository;
+        this.alertService = alertService;
         this.evaluators = evaluators.stream().collect(Collectors.toMap(
                 RuleEvaluator::supportedType,
                 Function.identity(),
@@ -81,7 +85,9 @@ public class RiskAssessmentService {
                         .sum()
         );
         transaction.markAssessed(score, riskLevel(score));
-        return transactionRepository.save(transaction);
+        TransactionEntity assessed = transactionRepository.save(transaction);
+        alertService.generateIfRequired(assessed, evaluations);
+        return assessed;
     }
 
     @Transactional(readOnly = true)

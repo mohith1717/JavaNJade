@@ -65,6 +65,12 @@ type while preserving any existing rule with the same code.
 Flyway V6 prevents duplicate transaction/rule evaluations and indexes assessment
 lookups.
 
+Step 6 automatically creates alerts for `HIGH` and `CRITICAL` assessments and
+provides a strict analyst lifecycle with assignment, investigation, decisions,
+closing, controlled reopening, status history, and audit records. See
+[the alert-management guide](../docs/ALERT_MANAGEMENT.md). Flyway V7 adds alert
+assignment, decision, reopening, and queue constraints.
+
 Use this JSON body for the POST request:
 
 ```json

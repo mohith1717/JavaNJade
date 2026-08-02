@@ -10,6 +10,9 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jadeguard.rule.MonitoringRuleEntity;
+import com.jadeguard.alert.AlertRepository;
+import com.jadeguard.alert.AlertStatusHistoryRepository;
+import com.jadeguard.audit.AuditEventRepository;
 import com.jadeguard.rule.MonitoringRuleRepository;
 import com.jadeguard.rule.RuleSeverity;
 import com.jadeguard.rule.RuleType;
@@ -56,8 +59,20 @@ class RiskAssessmentApiIntegrationTests {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    private AlertRepository alertRepository;
+
+    @Autowired
+    private AlertStatusHistoryRepository alertHistoryRepository;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
+
     @BeforeEach
     void resetDatabase() {
+        auditEventRepository.deleteAll();
+        alertHistoryRepository.deleteAll();
+        alertRepository.deleteAll();
         evaluationRepository.deleteAll();
         validationErrorRepository.deleteAll();
         routeHopRepository.deleteAll();

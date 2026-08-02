@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.jadeguard.rule.DuplicateRuleCodeException;
+import com.jadeguard.alert.AlertNotFoundException;
+import com.jadeguard.alert.InvalidAlertTransitionException;
 import com.jadeguard.risk.RiskAssessmentNotAvailableException;
 import com.jadeguard.rule.RuleConfigurationException;
 import com.jadeguard.rule.RuleNotFoundException;
@@ -13,6 +15,7 @@ import com.jadeguard.transaction.TransactionNotFoundException;
 import com.jadeguard.validation.ValidationErrorNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -26,6 +29,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             TransactionNotFoundException.class,
+            AlertNotFoundException.class,
             ValidationErrorNotFoundException.class,
             RuleNotFoundException.class
     })
@@ -65,6 +69,32 @@ public class GlobalExceptionHandler {
         return error(
                 HttpStatus.CONFLICT,
                 exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidAlertTransitionException.class)
+    public ResponseEntity<ApiError> handleInvalidAlertTransition(
+            InvalidAlertTransitionException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleConcurrentAlertUpdate(
+            ObjectOptimisticLockingFailureException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.CONFLICT,
+                "Alert was changed by another user; reload it and retry",
                 request.getRequestURI(),
                 Map.of()
         );
