@@ -2,11 +2,15 @@ package com.javanjade.Backend.service;
 
 import com.javanjade.Backend.dto.TransactionDecisionResponse;
 import com.javanjade.Backend.dto.TransactionProcessRequest;
+import com.javanjade.Backend.dto.TransactionViewResponse;
 import com.javanjade.Backend.dto.TriggeredRuleDto;
 import com.javanjade.Backend.model.FraudCase;
 import com.javanjade.Backend.model.TransactionRecord;
 import com.javanjade.Backend.model.TransactionStatus;
 import com.javanjade.Backend.repository.TransactionRecordRepository;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,4 +90,37 @@ public class TransactionPipelineService {
                 fraudCase != null ? fraudCase.getPriority() : null
         );
     }
+
+        @Transactional(readOnly = true)
+        public List<TransactionViewResponse> listRecentTransactions() {
+                return transactionRecordRepository.findAll().stream()
+                                .sorted(Comparator.comparing(TransactionRecord::getCreatedAt).reversed())
+                                .limit(200)
+                                .map(this::toView)
+                                .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public Optional<TransactionViewResponse> getTransaction(String transactionId) {
+                return transactionRecordRepository.findByTid(transactionId).map(this::toView);
+        }
+
+        private TransactionViewResponse toView(TransactionRecord transaction) {
+                return new TransactionViewResponse(
+                                transaction.getTid(),
+                                transaction.getAmount(),
+                                transaction.getCurrency(),
+                                transaction.getSenderAccountId(),
+                                transaction.getReceiverAccountId(),
+                                transaction.getSenderCountry(),
+                                transaction.getReceiverCountry(),
+                                transaction.getLocation(),
+                                transaction.getDeviceId(),
+                                transaction.getCreditScore(),
+                                transaction.getStatus(),
+                                transaction.getRiskScore(),
+                                transaction.getPrimaryReason(),
+                                transaction.getCreatedAt()
+                );
+        }
 }

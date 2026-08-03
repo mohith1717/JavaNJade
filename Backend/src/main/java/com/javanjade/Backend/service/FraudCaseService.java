@@ -59,6 +59,14 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse assign(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.OPEN) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                "Only OPEN cases can be assigned.", HttpStatus.BAD_REQUEST);
+        }
+        if (request.assignee() == null || request.assignee().isBlank()) {
+            throw new BusinessException("ASSIGNEE_REQUIRED",
+                "Assignee is required for assignment.", HttpStatus.BAD_REQUEST);
+        }
         fraudCase.setAssignedTo(request.assignee());
         fraudCase.setStatus(CaseStatus.ASSIGNED);
         auditLogService.append("CASE", alertId, "CASE_ASSIGNED", request.actor(),
@@ -69,6 +77,14 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse investigate(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.ASSIGNED) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                "Only ASSIGNED cases can move to INVESTIGATE.", HttpStatus.BAD_REQUEST);
+        }
+        if (fraudCase.getAssignedTo() == null || !fraudCase.getAssignedTo().equalsIgnoreCase(request.actor())) {
+            throw new BusinessException("ASSIGNEE_MISMATCH",
+                "Only the assigned investigator can start investigation.", HttpStatus.FORBIDDEN);
+        }
         fraudCase.setStatus(CaseStatus.INVESTIGATE);
         auditLogService.append("CASE", alertId, "CASE_INVESTIGATE", request.actor(),
                 "Investigation started. notes=" + nullSafe(request.notes()));
@@ -78,6 +94,14 @@ public class FraudCaseService {
     @Transactional
     public CaseViewResponse resolve(String alertId, CaseActionRequest request) {
         FraudCase fraudCase = findCase(alertId);
+        if (fraudCase.getStatus() != CaseStatus.INVESTIGATE) {
+            throw new BusinessException("INVALID_CASE_STATE",
+                "Only INVESTIGATE cases can be resolved.", HttpStatus.BAD_REQUEST);
+        }
+        if (fraudCase.getAssignedTo() == null || !fraudCase.getAssignedTo().equalsIgnoreCase(request.actor())) {
+            throw new BusinessException("ASSIGNEE_MISMATCH",
+                "Only the assigned investigator can resolve the case.", HttpStatus.FORBIDDEN);
+        }
         fraudCase.setStatus(request.clean() ? CaseStatus.CLEAN : CaseStatus.RESOLVED);
         auditLogService.append("CASE", alertId, "CASE_RESOLVED", request.actor(),
                 "Outcome=" + fraudCase.getStatus() + ", notes=" + nullSafe(request.notes()));

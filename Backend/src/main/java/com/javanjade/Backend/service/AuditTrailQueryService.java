@@ -2,6 +2,7 @@ package com.javanjade.Backend.service;
 
 import com.javanjade.Backend.dto.AuditEventResponse;
 import com.javanjade.Backend.repository.AuditLogEventRepository;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,21 @@ public class AuditTrailQueryService {
 
     public List<AuditEventResponse> getEntityTrail(String entityType, String entityId) {
         return auditLogEventRepository.findByEntityTypeAndEntityIdOrderByCreatedAtAsc(entityType, entityId).stream()
+                .map(event -> new AuditEventResponse(
+                        event.getEntityType(),
+                        event.getEntityId(),
+                        event.getAction(),
+                        event.getActor(),
+                        event.getDetails(),
+                        event.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    public List<AuditEventResponse> getRecentOperationalEvents() {
+        return auditLogEventRepository.findTop30ByActionInOrderByCreatedAtDesc(Arrays.asList(
+                        "TRANSACTION_PROCESSED", "CASE_CREATED", "CASE_ASSIGNED", "CASE_INVESTIGATE", "CASE_RESOLVED"
+                )).stream()
                 .map(event -> new AuditEventResponse(
                         event.getEntityType(),
                         event.getEntityId(),
