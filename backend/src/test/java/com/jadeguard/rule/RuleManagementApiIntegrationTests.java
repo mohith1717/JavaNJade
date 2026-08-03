@@ -8,7 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import java.time.Instant;
 
+import com.jadeguard.audit.AuditEventRepository;
+import com.jadeguard.security.UserEntity;
+import com.jadeguard.security.UserRepository;
+import com.jadeguard.security.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @AutoConfigureMockMvc
-@WithMockUser(roles = "ADMIN")
+@WithMockUser(username = "admin1", roles = "ADMIN")
 class RuleManagementApiIntegrationTests {
 
     private static final String HIGH_AMOUNT_RULE = """
@@ -51,9 +56,26 @@ class RuleManagementApiIntegrationTests {
     @Autowired
     private MonitoringRuleRepository repository;
 
+    @Autowired private UserRepository userRepository;
+    @Autowired private AuditEventRepository auditRepository;
+
     @BeforeEach
     void clearRules() {
+        auditRepository.deleteAll();
         repository.deleteAll();
+        userRepository.deleteAll();
+        Instant now = Instant.now();
+        userRepository.save(new UserEntity(
+                UUID.fromString("10000000-0000-0000-0000-000000000001"),
+                "admin1",
+                "admin@test.local",
+                "unused-test-password",
+                "Administrator",
+                UserRole.ADMIN,
+                true,
+                now,
+                now
+        ));
     }
 
     @Test
@@ -109,7 +131,8 @@ class RuleManagementApiIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "enabled": false
+                                  "enabled": false,
+                                  "reason": "Disabling during rule test"
                                 }
                                 """))
                 .andExpect(status().isOk())

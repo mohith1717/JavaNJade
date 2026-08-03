@@ -142,8 +142,28 @@ class AlertApiIntegrationTests {
                         "$.statusHistory[1].changedBy"
                 ).value(ADMIN_ID.toString()));
 
+        mockMvc.perform(get("/api/alerts/{id}/history", alertId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(6));
+
         org.assertj.core.api.Assertions.assertThat(auditRepository.count())
                 .isEqualTo(6);
+        org.assertj.core.api.Assertions.assertThat(
+                auditRepository
+                        .findByEntityTypeAndEntityIdOrderByOccurredAtAsc(
+                                "ALERT",
+                                UUID.fromString(alertId)
+                        )
+                        .stream()
+                        .map(com.jadeguard.audit.AuditEventEntity::getAction)
+        ).containsExactly(
+                "ALERT_CREATED",
+                "ALERT_ASSIGNED",
+                "ALERT_INVESTIGATION_STARTED",
+                "ALERT_BLOCKED",
+                "ALERT_CLOSED",
+                "ALERT_REOPENED"
+        );
     }
 
     @Test

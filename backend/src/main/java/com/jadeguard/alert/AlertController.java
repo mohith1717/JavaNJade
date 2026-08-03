@@ -48,6 +48,13 @@ public class AlertController {
         return alertService.getAlert(alertId);
     }
 
+    @GetMapping("/{alertId}/history")
+    public List<AlertStatusHistoryEntity> getHistory(
+            @PathVariable UUID alertId
+    ) {
+        return alertService.getHistory(alertId);
+    }
+
     @PostMapping("/{alertId}/assign")
     public AlertResponse assign(
             @PathVariable UUID alertId,

@@ -83,4 +83,5 @@ permissions return `403`.
 
 Step 7.3 derives every alert-action actor from Spring Security and records the
 authenticated user's UUID. Alert request bodies cannot supply `actorId`.
-Immutable audit-query endpoints remain a following Step 7 task.
+The immutable audit-query endpoints are implemented in Step 7.5 and documented
+in `AUDIT_TRAIL.md`.

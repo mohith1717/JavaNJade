@@ -19,6 +19,7 @@ public class SystemController {
                 "login", "/api/auth/login",
                 "transactions", "/api/transactions",
                 "rules", "/api/rules",
+                "auditEvents", "/api/audit-events",
                 "validationErrors", "/api/validation-errors",
                 "health", "/api/health"
         );

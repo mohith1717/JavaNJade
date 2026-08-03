@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.jadeguard.rule.DuplicateRuleCodeException;
+import com.jadeguard.audit.AuditEventNotFoundException;
 import com.jadeguard.alert.AlertNotFoundException;
 import com.jadeguard.alert.InvalidAlertTransitionException;
 import com.jadeguard.alert.InvalidAlertAssigneeException;
@@ -47,7 +48,8 @@ public class GlobalExceptionHandler {
             TransactionNotFoundException.class,
             AlertNotFoundException.class,
             ValidationErrorNotFoundException.class,
-            RuleNotFoundException.class
+            RuleNotFoundException.class,
+            AuditEventNotFoundException.class
     })
     public ResponseEntity<ApiError> handleNotFound(
             RuntimeException exception,

@@ -22,6 +22,9 @@ public record RuleRequest(
         @NotNull Boolean enabled,
         @NotNull RuleSeverity severity,
         @NotNull @Min(0) @Max(100) Integer riskWeight,
-        @NotNull JsonNode parameters
+        @NotNull JsonNode parameters,
+
+        @Size(max = 500)
+        String reason
 ) {
 }

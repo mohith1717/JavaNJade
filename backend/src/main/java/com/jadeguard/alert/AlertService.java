@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jadeguard.audit.AuditEventEntity;
-import com.jadeguard.audit.AuditEventRepository;
+import com.jadeguard.audit.AuditEventService;
 import com.jadeguard.risk.RuleEvaluationEntity;
 import com.jadeguard.security.UserEntity;
 import com.jadeguard.security.UserRole;
@@ -24,20 +23,20 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final AlertStatusHistoryRepository historyRepository;
-    private final AuditEventRepository auditRepository;
+    private final AuditEventService auditService;
     private final ObjectMapper objectMapper;
     private final UserService userService;
 
     public AlertService(
             AlertRepository alertRepository,
             AlertStatusHistoryRepository historyRepository,
-            AuditEventRepository auditRepository,
+            AuditEventService auditService,
             ObjectMapper objectMapper,
             UserService userService
     ) {
         this.alertRepository = alertRepository;
         this.historyRepository = historyRepository;
-        this.auditRepository = auditRepository;
+        this.auditService = auditService;
         this.objectMapper = objectMapper;
         this.userService = userService;
     }
@@ -70,6 +69,7 @@ public class AlertService {
                 null,
                 AlertStatus.OPEN,
                 "Automatically generated after risk assessment",
+                SYSTEM_ACTOR,
                 SYSTEM_ACTOR,
                 now
         );
@@ -117,6 +117,12 @@ public class AlertService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public List<AlertStatusHistoryEntity> getHistory(UUID alertId) {
+        findAlert(alertId);
+        return historyRepository.findByAlertIdOrderByChangedAtAsc(alertId);
+    }
+
     @Transactional
     public AlertResponse assign(
             UUID alertId,
@@ -130,6 +136,7 @@ public class AlertService {
                 alert,
                 AlertStatus.ASSIGNED,
                 actor.getId().toString(),
+                actor.getUsername(),
                 request.reason(),
                 () -> alert.assign(assignee.getId().toString(), Instant.now())
         );
@@ -148,6 +155,7 @@ public class AlertService {
                 alert,
                 AlertStatus.INVESTIGATING,
                 actor.getId().toString(),
+                actor.getUsername(),
                 request.reason(),
                 () -> alert.startInvestigation(Instant.now())
         );
@@ -197,6 +205,7 @@ public class AlertService {
                 alert,
                 AlertStatus.CLOSED,
                 actor.getId().toString(),
+                actor.getUsername(),
                 request.reason(),
                 () -> alert.close(request.reason(), Instant.now())
         );
@@ -221,6 +230,7 @@ public class AlertService {
                 alert,
                 AlertStatus.OPEN,
                 actor.getId().toString(),
+                actor.getUsername(),
                 request.reason(),
                 () -> alert.reopen(Instant.now())
         );
@@ -240,6 +250,7 @@ public class AlertService {
                 alert,
                 target,
                 actor.getId().toString(),
+                actor.getUsername(),
                 request.reason(),
                 () -> alert.decide(decision)
         );
@@ -249,6 +260,7 @@ public class AlertService {
             AlertEntity alert,
             AlertStatus target,
             String actorId,
+            String actorUsername,
             String reason,
             Runnable change
     ) {
@@ -256,7 +268,15 @@ public class AlertService {
         Instant changedAt = Instant.now();
         change.run();
         AlertEntity saved = alertRepository.saveAndFlush(alert);
-        recordTransition(saved, previous, target, reason, actorId, changedAt);
+        recordTransition(
+                saved,
+                previous,
+                target,
+                reason,
+                actorId,
+                actorUsername,
+                changedAt
+        );
         return toResponse(saved);
     }
 
@@ -266,6 +286,7 @@ public class AlertService {
             AlertStatus to,
             String reason,
             String actorId,
+            String actorUsername,
             Instant changedAt
     ) {
         historyRepository.save(new AlertStatusHistoryEntity(
@@ -284,15 +305,43 @@ public class AlertService {
         if (alert.getAssignedTo() != null) {
             details.put("assignedTo", alert.getAssignedTo());
         }
-        auditRepository.save(new AuditEventEntity(
-                UUID.randomUUID(),
+        var previousValue = objectMapper.createObjectNode();
+        previousValue.put("status", from == null ? null : from.name());
+        var newValue = objectMapper.createObjectNode();
+        newValue.put("status", to.name());
+        if (alert.getAssignedTo() != null) {
+            newValue.put("assignedTo", alert.getAssignedTo());
+        }
+        if (alert.getDecision() != null) {
+            newValue.put("decision", alert.getDecision().name());
+        }
+        auditService.record(
                 actorId,
-                "ALERT_STATUS_CHANGED",
+                actorUsername,
+                auditAction(from, to),
                 "ALERT",
                 alert.getId(),
+                previousValue,
+                newValue,
+                reason,
                 details,
                 changedAt
-        ));
+        );
+    }
+
+    private String auditAction(AlertStatus from, AlertStatus to) {
+        if (from == null) {
+            return "ALERT_CREATED";
+        }
+        return switch (to) {
+            case ASSIGNED -> "ALERT_ASSIGNED";
+            case INVESTIGATING -> "ALERT_INVESTIGATION_STARTED";
+            case APPROVED -> "ALERT_APPROVED";
+            case BLOCKED -> "ALERT_BLOCKED";
+            case ESCALATED -> "ALERT_ESCALATED";
+            case CLOSED -> "ALERT_CLOSED";
+            case OPEN -> "ALERT_REOPENED";
+        };
     }
 
     private String primaryReason(List<RuleEvaluationEntity> evaluations) {

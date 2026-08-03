@@ -42,9 +42,14 @@ Disable a rule without replacing its configuration:
 
 ```json
 {
-  "enabled": false
+  "enabled": false,
+  "reason": "Rule disabled after quarterly control review"
 }
 ```
+
+Create and replace requests may include an optional `reason`. Status changes
+require a reason. Rule creation, replacement, enabling, and disabling are
+recorded in the immutable audit trail.
 
 ## Supported rule configurations
 

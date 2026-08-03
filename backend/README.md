@@ -52,6 +52,8 @@ POST http://localhost:8080/api/transactions
 POST http://localhost:8080/api/rules
 PUT  http://localhost:8080/api/rules/{ruleId}
 PATCH http://localhost:8080/api/rules/{ruleId}/status
+GET  http://localhost:8080/api/audit-events
+GET  http://localhost:8080/api/alerts/{alertId}/history
 ```
 
 The validation-error list supports:

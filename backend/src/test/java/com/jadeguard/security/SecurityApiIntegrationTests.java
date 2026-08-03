@@ -202,7 +202,7 @@ class SecurityApiIntegrationTests {
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/audit-events")
                         .header("Authorization", authorization))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
     }
 
     @Test
