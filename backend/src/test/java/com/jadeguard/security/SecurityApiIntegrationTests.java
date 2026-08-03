@@ -1,7 +1,9 @@
 package com.jadeguard.security;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +59,15 @@ class SecurityApiIntegrationTests {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message")
                         .value("Authentication is required"));
+
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/alerts"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/rules"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/validation-errors"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -94,20 +105,46 @@ class SecurityApiIntegrationTests {
     }
 
     @Test
-    void rolesRestrictRulesAndAlertActions() throws Exception {
+    void fraudAnalystCanReadOperationsAndActButCannotAccessRulesOrAudits()
+            throws Exception {
         String fraudToken = login("fraud1", "Password1!");
-        String riskToken = login("risk1", "Password1!");
 
+        expectGetOk("/api/transactions", fraudToken);
+        expectGetOk("/api/validation-errors", fraudToken);
         mockMvc.perform(get("/api/alerts")
                         .header("Authorization", "Bearer " + fraudToken))
                 .andExpect(status().isOk());
-
         mockMvc.perform(post("/api/rules")
                         .header("Authorization", "Bearer " + fraudToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/rules")
+                        .header("Authorization", "Bearer " + fraudToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/audit-events")
+                        .header("Authorization", "Bearer " + fraudToken))
+                .andExpect(status().isForbidden());
 
+        mockMvc.perform(post(
+                        "/api/alerts/{id}/block",
+                        UUID.randomUUID()
+                ).header("Authorization", "Bearer " + fraudToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"reason":"Allowed through authorization"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void riskAnalystCanReadRiskDataButCannotMutateRulesOrAlerts()
+            throws Exception {
+        String riskToken = login("risk1", "Password1!");
+
+        expectGetOk("/api/transactions", riskToken);
+        expectGetOk("/api/validation-errors", riskToken);
+        expectGetOk("/api/alerts", riskToken);
         mockMvc.perform(get("/api/rules")
                         .header("Authorization", "Bearer " + riskToken))
                 .andExpect(status().isOk());
@@ -121,6 +158,69 @@ class SecurityApiIntegrationTests {
                                 {"reason":"Not allowed"}
                                 """))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/rules")
+                        .header("Authorization", "Bearer " + riskToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/audit-events")
+                        .header("Authorization", "Bearer " + riskToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminCanReachEveryProtectedEndpointGroup() throws Exception {
+        String adminToken = login("admin1", "Password1!");
+        String authorization = "Bearer " + adminToken;
+
+        expectGetOk("/api/transactions", adminToken);
+        expectGetOk("/api/validation-errors", adminToken);
+        expectGetOk("/api/alerts", adminToken);
+        expectGetOk("/api/rules", adminToken);
+
+        mockMvc.perform(post("/api/transactions")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/rules")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/rules/{id}", UUID.randomUUID())
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(patch(
+                        "/api/rules/{id}/status",
+                        UUID.randomUUID()
+                ).header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/audit-events")
+                        .header("Authorization", authorization))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void allAnalystRolesCanIngestTransactions() throws Exception {
+        for (String username : new String[]{"fraud1", "risk1", "admin1"}) {
+            String token = login(username, "Password1!");
+            mockMvc.perform(post("/api/transactions")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    private void expectGetOk(String path, String token) throws Exception {
+        mockMvc.perform(get(path)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
     }
 
     private String login(String usernameOrEmail, String password)

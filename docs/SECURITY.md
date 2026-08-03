@@ -37,6 +37,46 @@ Change or remove all seeded credentials before any shared deployment.
 | Rule changes | No | No | Yes |
 | Audit reads | No | No | Yes |
 
+The concrete route policy is:
+
+```text
+PUBLIC
+POST /api/auth/login
+GET  /api, /api/health, /actuator/health, /swagger-ui/**, /v3/api-docs/**
+
+AUTHENTICATED
+GET  /api/auth/me
+
+FRAUD_ANALYST, RISK_ANALYST, ADMIN
+GET  /api/transactions/**
+POST /api/transactions
+GET  /api/validation-errors/**
+GET  /api/alerts/**
+
+FRAUD_ANALYST, ADMIN
+POST /api/alerts/{alertId}/assign
+POST /api/alerts/{alertId}/start-investigation
+POST /api/alerts/{alertId}/approve
+POST /api/alerts/{alertId}/block
+POST /api/alerts/{alertId}/escalate
+POST /api/alerts/{alertId}/close
+POST /api/alerts/{alertId}/reopen
+
+RISK_ANALYST, ADMIN
+GET  /api/rules/**
+
+ADMIN
+POST  /api/rules/**
+PUT   /api/rules/**
+PATCH /api/rules/**
+GET   /api/audit-events/**
+```
+
+Transaction ingestion is temporarily available to all three application roles
+so the training generator can use an authenticated account. A dedicated
+`TRANSACTION_INGESTOR` service identity can replace this policy in a later
+deployment-focused step.
+
 Public endpoints are limited to login, API discovery, health, Swagger, and
 OpenAPI documentation. Missing authentication returns `401`; insufficient role
 permissions return `403`.

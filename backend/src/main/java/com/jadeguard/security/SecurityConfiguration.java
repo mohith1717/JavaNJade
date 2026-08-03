@@ -76,8 +76,21 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/rules/**")
                         .hasAnyRole("RISK_ANALYST", "ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/rules/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/rules/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/rules/**"
+                        ).hasRole("ADMIN")
                         .requestMatchers("/api/rules/**")
                         .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/alerts/**")
@@ -91,14 +104,29 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/audit-events/**")
                         .hasRole("ADMIN")
                         .requestMatchers(
-                                "/api/transactions/**",
+                                HttpMethod.GET,
+                                "/api/transactions/**"
+                        ).hasAnyRole(
+                                "FRAUD_ANALYST",
+                                "RISK_ANALYST",
+                                "ADMIN"
+                        )
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/transactions/**"
+                        ).hasAnyRole(
+                                "FRAUD_ANALYST",
+                                "RISK_ANALYST",
+                                "ADMIN"
+                        )
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/validation-errors/**"
                         ).hasAnyRole(
                                 "FRAUD_ANALYST",
                                 "RISK_ANALYST",
                                 "ADMIN"
                         )
-                        .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(errors -> errors
