@@ -41,6 +41,6 @@ Public endpoints are limited to login, API discovery, health, Swagger, and
 OpenAPI documentation. Missing authentication returns `401`; insufficient role
 permissions return `403`.
 
-Step 7.1 establishes identity and route authorization. A following Step 7 task
-will replace the temporary `actorId` in alert request bodies with the identity
-from Spring Security and expose immutable audit-query endpoints.
+Step 7.3 derives every alert-action actor from Spring Security and records the
+authenticated user's UUID. Alert request bodies cannot supply `actorId`.
+Immutable audit-query endpoints remain a following Step 7 task.

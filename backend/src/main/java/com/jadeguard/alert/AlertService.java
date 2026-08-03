@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jadeguard.audit.AuditEventEntity;
 import com.jadeguard.audit.AuditEventRepository;
 import com.jadeguard.risk.RuleEvaluationEntity;
+import com.jadeguard.security.UserEntity;
+import com.jadeguard.security.UserRole;
+import com.jadeguard.security.UserService;
 import com.jadeguard.transaction.RiskLevel;
 import com.jadeguard.transaction.TransactionEntity;
 import org.springframework.stereotype.Service;
@@ -23,17 +26,20 @@ public class AlertService {
     private final AlertStatusHistoryRepository historyRepository;
     private final AuditEventRepository auditRepository;
     private final ObjectMapper objectMapper;
+    private final UserService userService;
 
     public AlertService(
             AlertRepository alertRepository,
             AlertStatusHistoryRepository historyRepository,
             AuditEventRepository auditRepository,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            UserService userService
     ) {
         this.alertRepository = alertRepository;
         this.historyRepository = historyRepository;
         this.auditRepository = auditRepository;
         this.objectMapper = objectMapper;
+        this.userService = userService;
     }
 
     @Transactional
@@ -112,70 +118,96 @@ public class AlertService {
     }
 
     @Transactional
-    public AlertResponse assign(UUID alertId, AssignAlertRequest request) {
+    public AlertResponse assign(
+            UUID alertId,
+            AssignAlertRequest request,
+            UserEntity actor
+    ) {
         AlertEntity alert = findAlert(alertId);
         requireStatus(alert, AlertStatus.OPEN);
+        UserEntity assignee = requireEligibleAssignee(request.assignedTo());
         return transition(
                 alert,
                 AlertStatus.ASSIGNED,
-                request.actorId(),
+                actor.getId().toString(),
                 request.reason(),
-                () -> alert.assign(request.assignedTo(), Instant.now())
+                () -> alert.assign(assignee.getId().toString(), Instant.now())
         );
     }
 
     @Transactional
     public AlertResponse startInvestigation(
             UUID alertId,
-            AlertActionRequest request
+            AlertActionRequest request,
+            UserEntity actor
     ) {
         AlertEntity alert = findAlert(alertId);
         requireStatus(alert, AlertStatus.ASSIGNED);
-        requireAssignedAnalyst(alert, request.actorId());
+        requireAssignedAnalystOrAdmin(alert, actor);
         return transition(
                 alert,
                 AlertStatus.INVESTIGATING,
-                request.actorId(),
+                actor.getId().toString(),
                 request.reason(),
                 () -> alert.startInvestigation(Instant.now())
         );
     }
 
     @Transactional
-    public AlertResponse approve(UUID alertId, AlertActionRequest request) {
-        return decide(alertId, request, AlertDecision.APPROVED);
+    public AlertResponse approve(
+            UUID alertId,
+            AlertActionRequest request,
+            UserEntity actor
+    ) {
+        return decide(alertId, request, AlertDecision.APPROVED, actor);
     }
 
     @Transactional
-    public AlertResponse block(UUID alertId, AlertActionRequest request) {
-        return decide(alertId, request, AlertDecision.BLOCKED);
+    public AlertResponse block(
+            UUID alertId,
+            AlertActionRequest request,
+            UserEntity actor
+    ) {
+        return decide(alertId, request, AlertDecision.BLOCKED, actor);
     }
 
     @Transactional
-    public AlertResponse escalate(UUID alertId, AlertActionRequest request) {
-        return decide(alertId, request, AlertDecision.ESCALATED);
+    public AlertResponse escalate(
+            UUID alertId,
+            AlertActionRequest request,
+            UserEntity actor
+    ) {
+        return decide(alertId, request, AlertDecision.ESCALATED, actor);
     }
 
     @Transactional
-    public AlertResponse close(UUID alertId, AlertActionRequest request) {
+    public AlertResponse close(
+            UUID alertId,
+            AlertActionRequest request,
+            UserEntity actor
+    ) {
         AlertEntity alert = findAlert(alertId);
         if (alert.getStatus() != AlertStatus.APPROVED
                 && alert.getStatus() != AlertStatus.BLOCKED
                 && alert.getStatus() != AlertStatus.ESCALATED) {
             throw invalidTransition(alert, "CLOSED");
         }
-        requireAssignedAnalyst(alert, request.actorId());
+        requireAssignedAnalystOrAdmin(alert, actor);
         return transition(
                 alert,
                 AlertStatus.CLOSED,
-                request.actorId(),
+                actor.getId().toString(),
                 request.reason(),
                 () -> alert.close(request.reason(), Instant.now())
         );
     }
 
     @Transactional
-    public AlertResponse reopen(UUID alertId, AlertActionRequest request) {
+    public AlertResponse reopen(
+            UUID alertId,
+            AlertActionRequest request,
+            UserEntity actor
+    ) {
         AlertEntity alert = findAlert(alertId);
         requireStatus(alert, AlertStatus.CLOSED);
         if (alert.getPriority() != AlertPriority.HIGH
@@ -184,10 +216,11 @@ public class AlertService {
                     "Only closed HIGH or CRITICAL alerts can be reopened"
             );
         }
+        requireAssignedAnalystOrAdmin(alert, actor);
         return transition(
                 alert,
                 AlertStatus.OPEN,
-                request.actorId(),
+                actor.getId().toString(),
                 request.reason(),
                 () -> alert.reopen(Instant.now())
         );
@@ -196,16 +229,17 @@ public class AlertService {
     private AlertResponse decide(
             UUID alertId,
             AlertActionRequest request,
-            AlertDecision decision
+            AlertDecision decision,
+            UserEntity actor
     ) {
         AlertEntity alert = findAlert(alertId);
         requireStatus(alert, AlertStatus.INVESTIGATING);
-        requireAssignedAnalyst(alert, request.actorId());
+        requireAssignedAnalystOrAdmin(alert, actor);
         AlertStatus target = AlertStatus.valueOf(decision.name());
         return transition(
                 alert,
                 target,
-                request.actorId(),
+                actor.getId().toString(),
                 request.reason(),
                 () -> alert.decide(decision)
         );
@@ -285,13 +319,50 @@ public class AlertService {
         }
     }
 
-    private void requireAssignedAnalyst(AlertEntity alert, String actorId) {
-        if (!actorId.equals(alert.getAssignedTo())) {
-            throw new InvalidAlertTransitionException(
+    private void requireAssignedAnalystOrAdmin(
+            AlertEntity alert,
+            UserEntity actor
+    ) {
+        if (actor.getRole() == UserRole.ADMIN) {
+            return;
+        }
+        if (!actor.getId().toString().equals(alert.getAssignedTo())) {
+            throw new AlertActionForbiddenException(
                     "Only assigned analyst " + alert.getAssignedTo()
                             + " can perform this action"
             );
         }
+    }
+
+    private UserEntity requireEligibleAssignee(String assignedTo) {
+        final UUID assigneeId;
+        try {
+            assigneeId = UUID.fromString(assignedTo);
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidAlertAssigneeException(
+                    "assignedTo must be a valid user UUID"
+            );
+        }
+
+        final UserEntity assignee;
+        try {
+            assignee = userService.findById(assigneeId);
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException exception) {
+            throw new InvalidAlertAssigneeException(
+                    "Assigned user does not exist: " + assignedTo
+            );
+        }
+        if (!assignee.isEnabled()) {
+            throw new InvalidAlertAssigneeException(
+                    "Assigned user is disabled: " + assignedTo
+            );
+        }
+        if (assignee.getRole() != UserRole.FRAUD_ANALYST) {
+            throw new InvalidAlertAssigneeException(
+                    "Alerts can only be assigned to a FRAUD_ANALYST"
+            );
+        }
+        return assignee;
     }
 
     private InvalidAlertTransitionException invalidTransition(

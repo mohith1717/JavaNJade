@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+import com.jadeguard.security.CurrentUserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,9 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AlertController {
 
     private final AlertService alertService;
+    private final CurrentUserService currentUserService;
 
-    public AlertController(AlertService alertService) {
+    public AlertController(
+            AlertService alertService,
+            CurrentUserService currentUserService
+    ) {
         this.alertService = alertService;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping
@@ -47,7 +53,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AssignAlertRequest request
     ) {
-        return alertService.assign(alertId, request);
+        return alertService.assign(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/start-investigation")
@@ -55,7 +65,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.startInvestigation(alertId, request);
+        return alertService.startInvestigation(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/approve")
@@ -63,7 +77,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.approve(alertId, request);
+        return alertService.approve(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/block")
@@ -71,7 +89,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.block(alertId, request);
+        return alertService.block(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/escalate")
@@ -79,7 +101,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.escalate(alertId, request);
+        return alertService.escalate(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/close")
@@ -87,7 +113,11 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.close(alertId, request);
+        return alertService.close(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 
     @PostMapping("/{alertId}/reopen")
@@ -95,6 +125,10 @@ public class AlertController {
             @PathVariable UUID alertId,
             @Valid @RequestBody AlertActionRequest request
     ) {
-        return alertService.reopen(alertId, request);
+        return alertService.reopen(
+                alertId,
+                request,
+                currentUserService.requireCurrentUser()
+        );
     }
 }

@@ -118,7 +118,7 @@ class SecurityApiIntegrationTests {
                 ).header("Authorization", "Bearer " + riskToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"actorId":"risk1","reason":"Not allowed"}
+                                {"reason":"Not allowed"}
                                 """))
                 .andExpect(status().isForbidden());
     }

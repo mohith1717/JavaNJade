@@ -1,5 +1,7 @@
 package com.jadeguard.security;
 
+import java.util.UUID;
+
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -35,6 +37,14 @@ public class UserService implements UserDetailsService {
                 ))
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found"
+                ));
+    }
+
+    @Transactional(readOnly = true)
+    public UserEntity findById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found: " + userId
                 ));
     }
 }

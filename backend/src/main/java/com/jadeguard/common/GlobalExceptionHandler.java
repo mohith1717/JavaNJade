@@ -7,6 +7,8 @@ import java.util.Map;
 import com.jadeguard.rule.DuplicateRuleCodeException;
 import com.jadeguard.alert.AlertNotFoundException;
 import com.jadeguard.alert.InvalidAlertTransitionException;
+import com.jadeguard.alert.InvalidAlertAssigneeException;
+import com.jadeguard.alert.AlertActionForbiddenException;
 import com.jadeguard.risk.RiskAssessmentNotAvailableException;
 import com.jadeguard.rule.RuleConfigurationException;
 import com.jadeguard.rule.RuleNotFoundException;
@@ -95,6 +97,32 @@ public class GlobalExceptionHandler {
     ) {
         return error(
                 HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidAlertAssigneeException.class)
+    public ResponseEntity<ApiError> handleInvalidAlertAssignee(
+            InvalidAlertAssigneeException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(AlertActionForbiddenException.class)
+    public ResponseEntity<ApiError> handleAlertActionForbidden(
+            AlertActionForbiddenException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.FORBIDDEN,
                 exception.getMessage(),
                 request.getRequestURI(),
                 Map.of()

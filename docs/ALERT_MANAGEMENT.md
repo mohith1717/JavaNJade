@@ -12,12 +12,14 @@ OPEN -> ASSIGNED -> INVESTIGATING -> APPROVED | BLOCKED | ESCALATED
 ```
 
 An alert must follow this order. Invalid transitions return `409 Conflict`.
-Only the assigned analyst can start an investigation, decide, and close it.
+Only the assigned Fraud Analyst or an administrator can start an investigation,
+decide, close, or reopen it.
 Closed `HIGH` and `CRITICAL` alerts can be reopened with a reason; reopening
 clears the assignment but preserves the earlier decision and complete history.
 
-Until authentication is added, action bodies explicitly supply `actorId`. This
-value is stored in both `alert_status_history` and `audit_events`.
+The backend obtains the actor from the authenticated JWT and stores the user's
+UUID in both `alert_status_history` and `audit_events`. Clients cannot supply or
+override `actorId`.
 
 ## Read endpoints
 
@@ -26,7 +28,7 @@ GET /api/alerts
 GET /api/alerts/{alertId}
 GET /api/alerts?status=OPEN
 GET /api/alerts?priority=CRITICAL
-GET /api/alerts?assignedTo=analyst-1
+GET /api/alerts?assignedTo={fraudAnalystUserUuid}
 GET /api/alerts?transactionId={transactionId}
 ```
 
@@ -42,11 +44,12 @@ POST /api/alerts/{alertId}/assign
 
 ```json
 {
-  "assignedTo": "analyst-1",
-  "actorId": "team-lead-1",
+  "assignedTo": "10000000-0000-0000-0000-000000000002",
   "reason": "Assigning the high-risk queue"
 }
 ```
+
+The assignee must exist, be enabled, and have the `FRAUD_ANALYST` role.
 
 Start investigation:
 
@@ -68,7 +71,6 @@ These actions use:
 
 ```json
 {
-  "actorId": "analyst-1",
   "reason": "Readable justification for this action"
 }
 ```

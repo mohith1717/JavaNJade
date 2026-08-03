@@ -15,6 +15,9 @@ import com.jadeguard.rule.MonitoringRuleEntity;
 import com.jadeguard.rule.MonitoringRuleRepository;
 import com.jadeguard.rule.RuleSeverity;
 import com.jadeguard.rule.RuleType;
+import com.jadeguard.security.UserEntity;
+import com.jadeguard.security.UserRepository;
+import com.jadeguard.security.UserRole;
 import com.jadeguard.transaction.TransactionRepository;
 import com.jadeguard.transaction.TransactionRouteHopRepository;
 import com.jadeguard.validation.TransactionValidationErrorRepository;
@@ -36,8 +39,24 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @AutoConfigureMockMvc
-@WithMockUser(roles = "ADMIN")
+@WithMockUser(username = "admin1", roles = "ADMIN")
 class AlertApiIntegrationTests {
+
+    private static final UUID ADMIN_ID = UUID.fromString(
+            "10000000-0000-0000-0000-000000000001"
+    );
+    private static final UUID FRAUD_ID = UUID.fromString(
+            "10000000-0000-0000-0000-000000000002"
+    );
+    private static final UUID RISK_ID = UUID.fromString(
+            "10000000-0000-0000-0000-000000000003"
+    );
+    private static final UUID FRAUD_TWO_ID = UUID.fromString(
+            "10000000-0000-0000-0000-000000000004"
+    );
+    private static final UUID DISABLED_FRAUD_ID = UUID.fromString(
+            "10000000-0000-0000-0000-000000000005"
+    );
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
@@ -49,6 +68,7 @@ class AlertApiIntegrationTests {
     @Autowired private TransactionRouteHopRepository routeRepository;
     @Autowired private TransactionRepository transactionRepository;
     @Autowired private MonitoringRuleRepository ruleRepository;
+    @Autowired private UserRepository userRepository;
 
     @BeforeEach
     void resetDatabase() {
@@ -60,6 +80,17 @@ class AlertApiIntegrationTests {
         routeRepository.deleteAll();
         transactionRepository.deleteAll();
         ruleRepository.deleteAll();
+        userRepository.deleteAll();
+        saveUser(ADMIN_ID, "admin1", UserRole.ADMIN, true);
+        saveUser(FRAUD_ID, "fraud1", UserRole.FRAUD_ANALYST, true);
+        saveUser(RISK_ID, "risk1", UserRole.RISK_ANALYST, true);
+        saveUser(FRAUD_TWO_ID, "fraud2", UserRole.FRAUD_ANALYST, true);
+        saveUser(
+                DISABLED_FRAUD_ID,
+                "disabled-fraud",
+                UserRole.FRAUD_ANALYST,
+                false
+        );
     }
 
     @Test
@@ -82,20 +113,20 @@ class AlertApiIntegrationTests {
         );
 
         performAction(alertId, "assign", """
-                {"assignedTo":"analyst-1","actorId":"lead-1",
+                {"assignedTo":"%s",
                  "reason":"Assigning the high-risk queue"}
-                """, "ASSIGNED", 1);
+                """.formatted(FRAUD_ID), "ASSIGNED", 1);
         performAction(alertId, "start-investigation", actionBody(
-                "analyst-1", "Review started"
+                "Review started"
         ), "INVESTIGATING", 2);
         performAction(alertId, "block", actionBody(
-                "analyst-1", "Confirmed suspicious route"
+                "Confirmed suspicious route"
         ), "BLOCKED", 3);
         performAction(alertId, "close", actionBody(
-                "analyst-1", "Receiver blocked and case documented"
+                "Receiver blocked and case documented"
         ), "CLOSED", 4);
         performAction(alertId, "reopen", actionBody(
-                "lead-1", "New high-priority evidence received"
+                "New high-priority evidence received"
         ), "OPEN", 5);
 
         mockMvc.perform(get("/api/alerts/{id}", alertId))
@@ -105,6 +136,11 @@ class AlertApiIntegrationTests {
                 .andExpect(jsonPath("$.decision").value("BLOCKED"))
                 .andExpect(jsonPath("$.version").value(5))
                 .andExpect(jsonPath("$.statusHistory.length()").value(6));
+
+        mockMvc.perform(get("/api/alerts/{id}", alertId))
+                .andExpect(jsonPath(
+                        "$.statusHistory[1].changedBy"
+                ).value(ADMIN_ID.toString()));
 
         org.assertj.core.api.Assertions.assertThat(auditRepository.count())
                 .isEqualTo(6);
@@ -127,10 +163,45 @@ class AlertApiIntegrationTests {
 
         mockMvc.perform(post("/api/alerts/{id}/block", alertId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(actionBody("analyst-1", "Skipping assignment")))
+                        .content(actionBody("Skipping assignment")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message")
                         .value("Alert cannot move from OPEN to INVESTIGATING"));
+    }
+
+    @Test
+    void assignmentRejectsInvalidOrIneligibleUsers() throws Exception {
+        saveHighAmountRule(65);
+        createTransaction("ALERT-INVALID-ASSIGNEE", 250000);
+        UUID alertId = alertRepository.findAll().getFirst().getId();
+
+        assignExpecting(alertId, "not-a-uuid", 400);
+        assignExpecting(alertId, UUID.randomUUID().toString(), 400);
+        assignExpecting(alertId, RISK_ID.toString(), 400);
+        assignExpecting(alertId, DISABLED_FRAUD_ID.toString(), 400);
+    }
+
+    @Test
+    @WithMockUser(username = "fraud2", roles = "FRAUD_ANALYST")
+    void unassignedFraudAnalystCannotOperateAnotherAnalystsAlert()
+            throws Exception {
+        saveHighAmountRule(65);
+        createTransaction("ALERT-OWNERSHIP-001", 250000);
+        UUID alertId = alertRepository.findAll().getFirst().getId();
+
+        mockMvc.perform(post("/api/alerts/{id}/assign", alertId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"assignedTo":"%s","reason":"Assign fraud1"}
+                                """.formatted(FRAUD_ID)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(
+                        "/api/alerts/{id}/start-investigation",
+                        alertId
+                ).contentType(MediaType.APPLICATION_JSON)
+                        .content(actionBody("Attempting another queue")))
+                .andExpect(status().isForbidden());
     }
 
     private void performAction(
@@ -187,9 +258,40 @@ class AlertApiIntegrationTests {
         ));
     }
 
-    private String actionBody(String actorId, String reason) {
+    private String actionBody(String reason) {
         return """
-                {"actorId":"%s","reason":"%s"}
-                """.formatted(actorId, reason);
+                {"reason":"%s"}
+                """.formatted(reason);
+    }
+
+    private void assignExpecting(UUID alertId, String assignedTo, int status)
+            throws Exception {
+        mockMvc.perform(post("/api/alerts/{id}/assign", alertId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"assignedTo":"%s","reason":"Test assignee"}
+                                """.formatted(assignedTo)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .status().is(status));
+    }
+
+    private void saveUser(
+            UUID id,
+            String username,
+            UserRole role,
+            boolean enabled
+    ) {
+        Instant now = Instant.now();
+        userRepository.save(new UserEntity(
+                id,
+                username,
+                username + "@test.local",
+                "unused-test-password",
+                username,
+                role,
+                enabled,
+                now,
+                now
+        ));
     }
 }
