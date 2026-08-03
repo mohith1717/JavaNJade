@@ -23,6 +23,7 @@ SCENARIOS = (
     "multiple_countries",
     "rapid_transactions",
     "structuring",
+    "blacklisted_account",
     "invalid_transaction",
     "mixed",
 )
@@ -98,6 +99,9 @@ def transaction_for(
     elif selected == "structuring":
         sender = f"ACC-STRUCT-{batch_id}"
         amount = 50_000.00
+    elif selected == "blacklisted_account":
+        sender = "ACC-WATCHLIST-DEMO"
+        amount = 250_000.00
     elif invalid_variant == "same_account":
         receiver = sender
     elif invalid_variant == "unsupported_currency":

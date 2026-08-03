@@ -4,6 +4,11 @@ import generate
 
 
 class GeneratorScenarioTests(unittest.TestCase):
+    def test_blacklisted_scenario_uses_demo_account_and_high_amount(self):
+        generated = generate.transaction_for("blacklisted_account", "BATCH", 0)
+        self.assertEqual("ACC-WATCHLIST-DEMO", generated.payload["senderAccountId"])
+        self.assertEqual(250_000.00, generated.payload["amount"])
+
 
     def test_high_risk_country_creates_watchlist_route(self):
         generated = generate.transaction_for(

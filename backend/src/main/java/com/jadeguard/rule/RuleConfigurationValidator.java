@@ -48,6 +48,7 @@ public class RuleConfigurationValidator {
             case RAPID_TRANSACTIONS ->
                     validateRapidTransactions(parameters, errors);
             case STRUCTURING -> validateStructuring(parameters, errors);
+            case BLACKLISTED_ACCOUNT -> { }
         }
 
         if (!errors.isEmpty()) {

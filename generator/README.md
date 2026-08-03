@@ -53,6 +53,7 @@ python generate.py --scenario mixed --count 5 --seed 42 --dry-run
 | `multiple_countries` | Five hops trigger excessive-route rule |
 | `rapid_transactions` | Sixth same-sender transfer triggers rapid activity |
 | `structuring` | Fourth INR 50,000 transfer reaches INR 200,000 |
+| `blacklisted_account` | Uses `ACC-WATCHLIST-DEMO` plus a high amount; add the account through the Admin watchlist API first |
 | `invalid_transaction` | Rotates through four validation failures |
 | `mixed` | Seedable random selection of all scenarios |
 

@@ -16,6 +16,8 @@ import com.jadeguard.rule.RuleNotFoundException;
 import com.jadeguard.transaction.DuplicateTransactionException;
 import com.jadeguard.transaction.TransactionNotFoundException;
 import com.jadeguard.validation.ValidationErrorNotFoundException;
+import com.jadeguard.watchlist.DuplicateWatchlistedAccountException;
+import com.jadeguard.watchlist.WatchlistedAccountNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
@@ -49,7 +51,8 @@ public class GlobalExceptionHandler {
             AlertNotFoundException.class,
             ValidationErrorNotFoundException.class,
             RuleNotFoundException.class,
-            AuditEventNotFoundException.class
+            AuditEventNotFoundException.class,
+            WatchlistedAccountNotFoundException.class
     })
     public ResponseEntity<ApiError> handleNotFound(
             RuntimeException exception,
@@ -65,7 +68,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             DuplicateTransactionException.class,
-            DuplicateRuleCodeException.class
+            DuplicateRuleCodeException.class,
+            DuplicateWatchlistedAccountException.class
     })
     public ResponseEntity<ApiError> handleDuplicate(
             RuntimeException exception,
