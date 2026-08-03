@@ -103,6 +103,10 @@ public class SecurityConfiguration {
                         )
                         .requestMatchers("/api/audit-events/**")
                         .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/reports/**")
+                        .hasAnyRole("FRAUD_ANALYST", "RISK_ANALYST", "ADMIN")
+                        .requestMatchers("/api/reports/**")
+                        .hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/watchlisted-accounts/**")
                         .hasAnyRole("FRAUD_ANALYST", "RISK_ANALYST", "ADMIN")

@@ -11,6 +11,7 @@ import com.jadeguard.alert.InvalidAlertTransitionException;
 import com.jadeguard.alert.InvalidAlertAssigneeException;
 import com.jadeguard.alert.AlertActionForbiddenException;
 import com.jadeguard.risk.RiskAssessmentNotAvailableException;
+import com.jadeguard.report.InvalidReportFilterException;
 import com.jadeguard.rule.RuleConfigurationException;
 import com.jadeguard.rule.RuleNotFoundException;
 import com.jadeguard.transaction.DuplicateTransactionException;
@@ -159,6 +160,15 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 exception.getFieldErrors()
         );
+    }
+
+    @ExceptionHandler(InvalidReportFilterException.class)
+    public ResponseEntity<ApiError> handleReportFilters(
+            InvalidReportFilterException exception,
+            HttpServletRequest request
+    ) {
+        return error(HttpStatus.BAD_REQUEST, exception.getMessage(),
+                request.getRequestURI(), exception.getFieldErrors());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
