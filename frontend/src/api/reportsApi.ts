@@ -1,5 +1,5 @@
 import type { AlertSummary, CountryRisk, DashboardReports, ReportFilters, RiskSummary, RuleEffectiveness, TransactionVolume } from "../types/report";
-import { apiRequest } from "./apiClient";
+import { apiDownload, apiRequest } from "./apiClient";
 
 export async function getDashboardReports(filters: ReportFilters, signal?: AbortSignal): Promise<DashboardReports> {
   const common = query(filters, false); const volume = query(filters, true);
@@ -13,6 +13,10 @@ export async function getDashboardReports(filters: ReportFilters, signal?: Abort
   return { risk, alerts, rules, countries, volume: transactionVolume };
 }
 
+export type CsvReportType = "RISK_SUMMARY" | "ALERT_SUMMARY" | "RULE_EFFECTIVENESS" | "COUNTRY_RISK" | "TRANSACTION_VOLUME" | "DASHBOARD_SUMMARY";
+export function downloadCsv(type: CsvReportType, filters: ReportFilters) { return apiDownload(`/reports/export/csv${queryWithType(filters, type)}`); }
+export function downloadPdf(filters: ReportFilters) { return apiDownload(`/reports/export/pdf${query(filters, true)}`); }
+
 function query(filters: ReportFilters, includeInterval: boolean) {
   const params = new URLSearchParams();
   if (filters.from) params.set("from", new Date(filters.from).toISOString());
@@ -22,4 +26,8 @@ function query(filters: ReportFilters, includeInterval: boolean) {
   if (filters.riskLevel) params.set("riskLevel", filters.riskLevel);
   if (includeInterval && filters.interval) params.set("interval", filters.interval);
   return params.size ? `?${params.toString()}` : "";
+}
+
+function queryWithType(filters: ReportFilters, type: CsvReportType) {
+  const suffix = query(filters, true); const params = new URLSearchParams(suffix.startsWith("?") ? suffix.slice(1) : ""); params.set("reportType", type); return `?${params}`;
 }

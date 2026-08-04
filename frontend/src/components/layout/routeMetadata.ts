@@ -11,4 +11,6 @@ export const metadataFor = (pathname: string) => pathname.startsWith("/alerts/")
   ? { title: "Alert investigation", description: "Review alert evidence and transaction risk" }
   : pathname.startsWith("/admin/rules/")
     ? { title: "Rule configuration", description: "Review and configure transaction risk logic" }
+  : pathname.startsWith("/admin/audit/")
+    ? { title: "Audit event", description: "Inspect immutable activity evidence" }
   : ROUTES[pathname] || { title: "JadeGuard", description: "Transaction monitoring workspace" };

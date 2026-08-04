@@ -40,6 +40,25 @@ export async function apiRequest<T>(
   return body as T;
 }
 
+export async function apiDownload(path: string): Promise<{ blob: Blob; filename: string }> {
+  const token = getAccessToken();
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch {
+    throw new ApiError("JadeGuard backend is unavailable. Check that it is running on port 8080.", 0);
+  }
+  if (!response.ok) {
+    const body = await readBody(response) as ApiErrorBody | undefined;
+    if (response.status === 401) { clearAccessToken(); window.location.assign("/login?session=expired"); }
+    else if (response.status === 403) window.location.assign("/unauthorized");
+    throw new ApiError(body?.message || `Download failed with status ${response.status}`, response.status, body?.fieldErrors);
+  }
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || "jadeguard-report";
+  return { blob: await response.blob(), filename };
+}
+
 async function readBody(response: Response): Promise<unknown> {
   if (response.status === 204) return undefined;
   const text = await response.text();

@@ -15,6 +15,9 @@ import { TransactionListPage } from "./pages/TransactionListPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { RuleDetailPage } from "./pages/RuleDetailPage";
 import { RuleListPage } from "./pages/RuleListPage";
+import { AuditDetailPage } from "./pages/AuditDetailPage";
+import { AuditListPage } from "./pages/AuditListPage";
+import { ReportsPage } from "./pages/ReportsPage";
 
 export function App() {
   return (
@@ -30,11 +33,12 @@ export function App() {
             <Route path="/alerts/:alertId" element={<AlertInvestigationPage />} />
             <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
             <Route path="/transactions" element={<TransactionListPage />} />
-            <Route path="/reports" element={<PlaceholderPage title="Reports" description="Risk, alert, rule and country reports will be visualized in Step 9.8." />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/watchlisted-accounts" element={<PlaceholderPage title="Watchlisted accounts" description="Account-watchlist visibility and administration will be implemented with the Admin tools." />} />
           </Route>
           <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/admin/audit" element={<PlaceholderPage title="Audit history" description="Immutable audit exploration will be implemented in Step 9.8." />} />
+            <Route path="/admin/audit" element={<AuditListPage />} />
+            <Route path="/admin/audit/:auditEventId" element={<AuditDetailPage />} />
             <Route path="/admin/rules/new" element={<RuleDetailPage />} />
           </Route>
           <Route element={<RoleRoute allowedRoles={["RISK_ANALYST", "ADMIN"]} />}>

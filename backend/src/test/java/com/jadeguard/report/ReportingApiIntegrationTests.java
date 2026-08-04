@@ -3,6 +3,9 @@ package com.jadeguard.report;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import org.springframework.http.HttpHeaders;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -115,6 +118,29 @@ class ReportingApiIntegrationTests {
     void reportsRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/reports/risk-summary"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test @WithMockUser(roles = "RISK_ANALYST")
+    void exportsFilteredReportsAsCsvAndPdf() throws Exception {
+        mockMvc.perform(get("/api/reports/export/csv")
+                        .queryParam("reportType", "RULE_EFFECTIVENESS")
+                        .queryParam("currency", "INR"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE,
+                        "text/csv"))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"jadeguard-rule-effectiveness.csv\""))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "REPORT_RULE")));
+
+        byte[] pdf = mockMvc.perform(get("/api/reports/export/pdf")
+                        .queryParam("country", "MM"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE,
+                        "application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+        org.assertj.core.api.Assertions.assertThat(pdf)
+                .startsWith("%PDF-1.4".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
     }
 
     private TransactionEntity transaction(UUID id, String externalId,
