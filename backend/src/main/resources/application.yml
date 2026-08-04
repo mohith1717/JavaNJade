@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: jadeguard-backend
+  datasource:
+    url: ${JADEGUARD_DB_URL:jdbc:mysql://localhost:3306/jadeguard?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${JADEGUARD_DB_USER:root}
+    password: ${JADEGUARD_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
