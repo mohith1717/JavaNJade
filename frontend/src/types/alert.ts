@@ -19,6 +19,18 @@ export type Alert = {
   version: number;
 };
 
+export type AlertHistory = {
+  id: string;
+  alertId: string;
+  fromStatus: AlertStatus | null;
+  toStatus: AlertStatus;
+  reason: string | null;
+  changedBy: string;
+  changedAt: string;
+};
+
+export type AlertDetail = Alert & { statusHistory: AlertHistory[] };
+
 export type AlertFilters = {
   status?: AlertStatus;
   priority?: AlertPriority;

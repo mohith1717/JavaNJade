@@ -1,0 +1,6 @@
+import type { FundFlow, RiskAssessment } from "../../types/transaction";
+
+export function CountryFlow({ flow, assessment }: { flow: FundFlow; assessment: RiskAssessment | null }) {
+  const countryExplanation = assessment?.evaluations.filter((evaluation) => evaluation.triggered && evaluation.ruleType === "HIGH_RISK_COUNTRY").map((evaluation) => evaluation.explanation).join(" ") || "";
+  return <article className="investigation-card country-flow-card"><div className="card-heading"><div><p className="eyebrow">Route of funds</p><h2>{flow.originCountry.countryName} to {flow.destinationCountry.countryName}</h2></div><span className="record-count">{flow.totalHops} hops</span></div><div className="country-flow" aria-label="Transaction country route">{flow.route.map((hop, index) => { const risky = countryExplanation.includes(hop.countryCode); return <div className="flow-segment" key={hop.id}><div className={`flow-hop ${risky ? "risky-hop" : ""}`}><div className="country-code">{hop.countryCode}</div><div><span>{hop.hopType}</span><strong>{hop.countryName}</strong><small>{hop.institution || "Institution unavailable"}</small></div>{risky && <b className="route-risk">Risk match</b>}</div>{index < flow.route.length - 1 && <div className="flow-connector"><i /><span>→</span></div>}</div>; })}</div></article>;
+}

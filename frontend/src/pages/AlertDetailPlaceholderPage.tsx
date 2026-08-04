@@ -1,2 +1,0 @@
-import { Link, useParams } from "react-router-dom";
-export function AlertDetailPlaceholderPage() { const { alertId } = useParams(); return <section className="placeholder-card"><p className="eyebrow">Alert selected</p><h1>Investigation workspace</h1><p>Alert <code>{alertId}</code> was opened successfully. Full transaction, route, risk breakdown and lifecycle actions arrive in Step 9.4.</p><Link className="secondary-button back-link" to="/alerts">← Back to alert queue</Link></section>; }
