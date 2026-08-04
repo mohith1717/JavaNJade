@@ -12,6 +12,7 @@ import { AlertQueuePage } from "./pages/AlertQueuePage";
 import { AlertInvestigationPage } from "./pages/AlertInvestigationPage";
 import { TransactionDetailPage } from "./pages/TransactionDetailPage";
 import { TransactionListPage } from "./pages/TransactionListPage";
+import { DashboardPage } from "./pages/DashboardPage";
 
 export function App() {
   return (
@@ -22,7 +23,7 @@ export function App() {
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route element={<AppShell />}>
           <Route element={<RoleRoute allowedRoles={["FRAUD_ANALYST", "RISK_ANALYST", "ADMIN"]} />}>
-            <Route path="/dashboard" element={<PlaceholderPage title="Operations dashboard" description="Live monitoring and reporting will be implemented in Step 9.6." />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/alerts" element={<AlertQueuePage />} />
             <Route path="/alerts/:alertId" element={<AlertInvestigationPage />} />
             <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
