@@ -5,7 +5,7 @@ import { ApiError } from "../api/ApiError";
 import { useAuth } from "../auth/AuthContext";
 import { landingFor } from "../auth/rolePaths";
 
-type LocationState = { from?: { pathname?: string } };
+type LocationState = { from?: { pathname?: string; search?: string; hash?: string } };
 
 export function LoginPage() {
   const { login, user, isInitializing } = useAuth();
@@ -32,7 +32,10 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       const authenticatedUser = await login(usernameOrEmail.trim(), password);
-      const attempted = (location.state as LocationState | null)?.from?.pathname;
+      const previous = (location.state as LocationState | null)?.from;
+      const attempted = previous?.pathname
+        ? `${previous.pathname}${previous.search || ""}${previous.hash || ""}`
+        : undefined;
       navigate(attempted || landingFor(authenticatedUser.role), { replace: true });
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 401) {

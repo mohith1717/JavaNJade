@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { currentUserRequest, loginRequest } from "../api/authApi";
 import type { AuthUser } from "./authTypes";
 import { clearAccessToken, getAccessToken, saveAccessToken } from "./tokenStorage";
+import { tokenExpiresAt, tokenIsExpired } from "./jwtSession";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -19,7 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    if (!getAccessToken()) {
+    const token = getAccessToken();
+    if (!token) {
+      setInitializing(false);
+      return;
+    }
+    if (tokenIsExpired(token)) {
+      clearAccessToken();
       setInitializing(false);
       return;
     }
@@ -31,6 +38,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => setInitializing(false));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    const expiresAt = token ? tokenExpiresAt(token) : null;
+    if (!expiresAt) return;
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) {
+      clearAccessToken(); setUser(null);
+      window.location.assign("/login?session=expired");
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      clearAccessToken(); setUser(null);
+      window.location.assign("/login?session=expired");
+    }, remaining);
+    return () => window.clearTimeout(timer);
+  }, [user]);
 
   const login = useCallback(async (usernameOrEmail: string, password: string) => {
     const response = await loginRequest(usernameOrEmail, password);
