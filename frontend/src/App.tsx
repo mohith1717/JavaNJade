@@ -6,7 +6,6 @@ import { RoleLanding } from "./auth/RoleLanding";
 import { AppShell } from "./components/layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 import { AlertQueuePage } from "./pages/AlertQueuePage";
 import { AlertInvestigationPage } from "./pages/AlertInvestigationPage";
@@ -20,6 +19,7 @@ import { AuditListPage } from "./pages/AuditListPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { UserDetailPage } from "./pages/UserDetailPage";
 import { UserListPage } from "./pages/UserListPage";
+import { WatchlistedAccountsPage } from "./pages/WatchlistedAccountsPage";
 
 export function App() {
   return (
@@ -36,7 +36,7 @@ export function App() {
             <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
             <Route path="/transactions" element={<TransactionListPage />} />
             <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/watchlisted-accounts" element={<PlaceholderPage title="Watchlisted accounts" description="Account-watchlist visibility and administration will be implemented with the Admin tools." />} />
+            <Route path="/watchlisted-accounts" element={<WatchlistedAccountsPage />} />
           </Route>
           <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
             <Route path="/admin/audit" element={<AuditListPage />} />
