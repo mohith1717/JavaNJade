@@ -7,4 +7,6 @@ const ROUTES: Record<string, { title: string; description: string }> = {
   "/admin/rules": { title: "Rule management", description: "Configure how JadeGuard identifies transaction risk" },
   "/admin/audit": { title: "Audit history", description: "Trace immutable user and system activity" },
 };
-export const metadataFor = (pathname: string) => ROUTES[pathname] || { title: "JadeGuard", description: "Transaction monitoring workspace" };
+export const metadataFor = (pathname: string) => pathname.startsWith("/alerts/")
+  ? { title: "Alert investigation", description: "Review alert evidence and transaction risk" }
+  : ROUTES[pathname] || { title: "JadeGuard", description: "Transaction monitoring workspace" };
