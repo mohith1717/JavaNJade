@@ -14,6 +14,9 @@ import com.jadeguard.risk.RiskAssessmentNotAvailableException;
 import com.jadeguard.report.InvalidReportFilterException;
 import com.jadeguard.rule.RuleConfigurationException;
 import com.jadeguard.rule.RuleNotFoundException;
+import com.jadeguard.security.DuplicateUserException;
+import com.jadeguard.security.InvalidUserOperationException;
+import com.jadeguard.security.UserNotFoundException;
 import com.jadeguard.transaction.DuplicateTransactionException;
 import com.jadeguard.transaction.TransactionNotFoundException;
 import com.jadeguard.validation.ValidationErrorNotFoundException;
@@ -52,6 +55,7 @@ public class GlobalExceptionHandler {
             AlertNotFoundException.class,
             ValidationErrorNotFoundException.class,
             RuleNotFoundException.class,
+            UserNotFoundException.class,
             AuditEventNotFoundException.class,
             WatchlistedAccountNotFoundException.class
     })
@@ -70,7 +74,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             DuplicateTransactionException.class,
             DuplicateRuleCodeException.class,
-            DuplicateWatchlistedAccountException.class
+            DuplicateWatchlistedAccountException.class,
+            DuplicateUserException.class
     })
     public ResponseEntity<ApiError> handleDuplicate(
             RuntimeException exception,
@@ -82,6 +87,15 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 Map.of()
         );
+    }
+
+    @ExceptionHandler(InvalidUserOperationException.class)
+    public ResponseEntity<ApiError> handleInvalidUserOperation(
+            InvalidUserOperationException exception,
+            HttpServletRequest request
+    ) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(),
+                request.getRequestURI(), Map.of());
     }
 
     @ExceptionHandler(RiskAssessmentNotAvailableException.class)

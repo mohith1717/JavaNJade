@@ -79,4 +79,27 @@ public class UserEntity {
     public boolean isEnabled() { return enabled; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+
+    public void updateProfile(String username, String email,
+            String displayName, Instant updatedAt) {
+        this.username = username;
+        this.email = email;
+        this.displayName = displayName;
+        this.updatedAt = updatedAt;
+    }
+
+    public void changeStatus(boolean enabled, Instant updatedAt) {
+        this.enabled = enabled;
+        this.updatedAt = updatedAt;
+    }
+
+    public void changeRole(UserRole role, Instant updatedAt) {
+        this.role = role;
+        this.updatedAt = updatedAt;
+    }
+
+    public void changePassword(String passwordHash, Instant updatedAt) {
+        this.passwordHash = passwordHash;
+        this.updatedAt = updatedAt;
+    }
 }

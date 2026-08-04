@@ -396,7 +396,7 @@ public class AlertService {
         final UserEntity assignee;
         try {
             assignee = userService.findById(assigneeId);
-        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException exception) {
+        } catch (com.jadeguard.security.UserNotFoundException exception) {
             throw new InvalidAlertAssigneeException(
                     "Assigned user does not exist: " + assignedTo
             );

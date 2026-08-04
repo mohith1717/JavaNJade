@@ -18,6 +18,8 @@ import { RuleListPage } from "./pages/RuleListPage";
 import { AuditDetailPage } from "./pages/AuditDetailPage";
 import { AuditListPage } from "./pages/AuditListPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { UserDetailPage } from "./pages/UserDetailPage";
+import { UserListPage } from "./pages/UserListPage";
 
 export function App() {
   return (
@@ -40,6 +42,9 @@ export function App() {
             <Route path="/admin/audit" element={<AuditListPage />} />
             <Route path="/admin/audit/:auditEventId" element={<AuditDetailPage />} />
             <Route path="/admin/rules/new" element={<RuleDetailPage />} />
+            <Route path="/admin/users" element={<UserListPage />} />
+            <Route path="/admin/users/new" element={<UserDetailPage />} />
+            <Route path="/admin/users/:userId" element={<UserDetailPage />} />
           </Route>
           <Route element={<RoleRoute allowedRoles={["RISK_ANALYST", "ADMIN"]} />}>
             <Route path="/admin/rules" element={<RuleListPage />} />
