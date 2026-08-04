@@ -464,6 +464,19 @@ class TransactionApiIntegrationTests {
                 .andExpect(jsonPath("$.route").isEmpty());
     }
 
+    @Test
+    void fundFlowReturnsNotFoundForUnknownTransaction() throws Exception {
+        UUID unknownId = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/transactions/{id}/fund-flow", unknownId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Transaction not found: " + unknownId))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/transactions/" + unknownId + "/fund-flow"));
+    }
+
     private String createAndReadId(String body) throws Exception {
         var response = mockMvc.perform(post("/api/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
