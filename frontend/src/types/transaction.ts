@@ -14,6 +14,23 @@ export type Transaction = {
   createdAt: string;
 };
 
+export type TransactionRouteHop = {
+  id: string;
+  transactionId: string;
+  sequence: number;
+  countryCode: string;
+  institution: string | null;
+};
+
+export type TransactionValidationError = {
+  id: string;
+  transactionId: string;
+  code: string;
+  field: string;
+  message: string;
+  createdAt: string;
+};
+
 export type RuleEvaluation = {
   evaluationId: string;
   ruleId: string;

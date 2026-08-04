@@ -10,6 +10,8 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 import { AlertQueuePage } from "./pages/AlertQueuePage";
 import { AlertInvestigationPage } from "./pages/AlertInvestigationPage";
+import { TransactionDetailPage } from "./pages/TransactionDetailPage";
+import { TransactionListPage } from "./pages/TransactionListPage";
 
 export function App() {
   return (
@@ -23,8 +25,8 @@ export function App() {
             <Route path="/dashboard" element={<PlaceholderPage title="Operations dashboard" description="Live monitoring and reporting will be implemented in Step 9.6." />} />
             <Route path="/alerts" element={<AlertQueuePage />} />
             <Route path="/alerts/:alertId" element={<AlertInvestigationPage />} />
-            <Route path="/transactions/:transactionId" element={<PlaceholderPage title="Transaction details" description="Complete transaction and fund-flow detail will be implemented in Step 9.5." />} />
-            <Route path="/transactions" element={<PlaceholderPage title="Transactions" description="Transaction search and fund-flow details will be implemented in Step 9.5." />} />
+            <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
+            <Route path="/transactions" element={<TransactionListPage />} />
             <Route path="/reports" element={<PlaceholderPage title="Reports" description="Risk, alert, rule and country reports will be visualized in Step 9.8." />} />
             <Route path="/watchlisted-accounts" element={<PlaceholderPage title="Watchlisted accounts" description="Account-watchlist visibility and administration will be implemented with the Admin tools." />} />
           </Route>
