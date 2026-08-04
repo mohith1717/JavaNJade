@@ -13,6 +13,8 @@ import { AlertInvestigationPage } from "./pages/AlertInvestigationPage";
 import { TransactionDetailPage } from "./pages/TransactionDetailPage";
 import { TransactionListPage } from "./pages/TransactionListPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { RuleDetailPage } from "./pages/RuleDetailPage";
+import { RuleListPage } from "./pages/RuleListPage";
 
 export function App() {
   return (
@@ -32,8 +34,12 @@ export function App() {
             <Route path="/watchlisted-accounts" element={<PlaceholderPage title="Watchlisted accounts" description="Account-watchlist visibility and administration will be implemented with the Admin tools." />} />
           </Route>
           <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/admin/rules" element={<PlaceholderPage title="Rule management" description="Rule configuration will be implemented in Step 9.7." />} />
             <Route path="/admin/audit" element={<PlaceholderPage title="Audit history" description="Immutable audit exploration will be implemented in Step 9.8." />} />
+            <Route path="/admin/rules/new" element={<RuleDetailPage />} />
+          </Route>
+          <Route element={<RoleRoute allowedRoles={["RISK_ANALYST", "ADMIN"]} />}>
+            <Route path="/admin/rules" element={<RuleListPage />} />
+            <Route path="/admin/rules/:ruleId" element={<RuleDetailPage />} />
           </Route>
         </Route>
       </Route>

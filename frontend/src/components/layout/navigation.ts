@@ -15,7 +15,7 @@ export const NAVIGATION: NavigationItem[] = [
   { label: "Alert queue", path: "/alerts", icon: "alert", roles: ALL },
   { label: "Reports", path: "/reports", icon: "chart", roles: ALL },
   { label: "Watchlisted accounts", path: "/watchlisted-accounts", icon: "shield", roles: ALL },
-  { label: "Rule management", path: "/admin/rules", icon: "rules", roles: ["ADMIN"] },
+  { label: "Rules", path: "/admin/rules", icon: "rules", roles: ["RISK_ANALYST", "ADMIN"] },
   { label: "Audit history", path: "/admin/audit", icon: "audit", roles: ["ADMIN"] },
 ];
 
