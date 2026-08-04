@@ -1,0 +1,1 @@
+export function EmptyState({ title, description, compact = false }: { title: string; description: string; compact?: boolean }) { return <div className={`feedback-state empty-state ${compact ? "compact" : ""}`}><span className="feedback-icon">◇</span><div><strong>{title}</strong><p>{description}</p></div></div>; }
