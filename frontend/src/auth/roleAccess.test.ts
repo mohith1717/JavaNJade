@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { navigationFor } from "../components/layout/navigation";
+import { moduleFor } from "../components/layout/routeMetadata";
 import { landingFor } from "./rolePaths";
 
 describe("role-based frontend access", () => {
@@ -33,5 +34,18 @@ describe("role-based frontend access", () => {
     expect(paths).toEqual(expect.arrayContaining([
       "/admin/rules", "/admin/audit", "/admin/users", "/watchlisted-accounts",
     ]));
+  });
+
+  it.each([
+    ["/dashboard", "dashboard"],
+    ["/alerts/alert-id", "alerts"],
+    ["/transactions/transaction-id", "transactions"],
+    ["/admin/rules/rule-id", "rules"],
+    ["/admin/audit/event-id", "audit"],
+    ["/reports", "reports"],
+    ["/admin/users/user-id", "users"],
+    ["/watchlisted-accounts", "watchlist"],
+  ] as const)("assigns %s to the %s visual module", (path, module) => {
+    expect(moduleFor(path)).toBe(module);
   });
 });
