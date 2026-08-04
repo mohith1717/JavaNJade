@@ -1,37 +1,33 @@
-const modules = [
-  "Operations overview",
-  "Transactions",
-  "Alert queue",
-  "Investigation workspace",
-  "Rules",
-  "Reports",
-  "Audit trail"
-];
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { RoleRoute } from "./auth/RoleRoute";
+import { RoleLanding } from "./auth/RoleLanding";
+import { LoginPage } from "./pages/LoginPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 
 export function App() {
   return (
-    <main className="app-shell">
-      <header>
-        <p className="eyebrow">Transaction monitoring</p>
-        <h1>JadeGuard</h1>
-        <p className="subtitle">
-          The project skeleton is running. Feature teams can now build against a
-          shared frontend, API, and database contract.
-        </p>
-      </header>
-
-      <section aria-labelledby="modules-heading">
-        <h2 id="modules-heading">Planned modules</h2>
-        <div className="module-grid">
-          {modules.map((module) => (
-            <article className="module-card" key={module}>
-              <span aria-hidden="true">◇</span>
-              <h3>{module}</h3>
-              <p>Ready for implementation</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<RoleLanding />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route element={<RoleRoute allowedRoles={["FRAUD_ANALYST", "RISK_ANALYST", "ADMIN"]} />}>
+          <Route path="/dashboard" element={<PlaceholderPage title="Operations dashboard" description="Live monitoring and reporting will be implemented in Step 9.6." />} />
+        </Route>
+        <Route element={<RoleRoute allowedRoles={["FRAUD_ANALYST", "RISK_ANALYST", "ADMIN"]} />}>
+          <Route path="/alerts" element={<PlaceholderPage title="Alert queue" description="The analyst alert queue will be implemented in Step 9.3." />} />
+          <Route path="/transactions" element={<PlaceholderPage title="Transactions" description="Transaction search and fund-flow details will be implemented in Step 9.5." />} />
+        </Route>
+        <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
+          <Route path="/admin/rules" element={<PlaceholderPage title="Rule management" description="Rule configuration will be implemented in Step 9.7." />} />
+        </Route>
+      </Route>
+      <Route path="/not-found" element={<NotFoundPage />} />
+      <Route path="*" element={<Navigate to="/not-found" replace />} />
+    </Routes>
   );
 }
