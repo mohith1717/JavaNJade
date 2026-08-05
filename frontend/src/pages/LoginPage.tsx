@@ -58,6 +58,16 @@ export function LoginPage() {
           <p className="eyebrow">Transaction intelligence</p>
           <h1>See the risk.<br />Trace the route.<br /><span>Act with confidence.</span></h1>
           <p>Explainable monitoring for transactions, country flows and analyst decisions.</p>
+          <div className="brand-stats" aria-label="Platform statistics">
+            <div className="brand-stat"><strong>99.7%</strong><small>Detection Rate</small></div>
+            <div className="brand-stat"><strong>&lt;50ms</strong><small>Avg Response</small></div>
+            <div className="brand-stat"><strong>24/7</strong><small>Monitoring</small></div>
+          </div>
+          <div className="brand-feature-list" aria-hidden="true">
+            <span>✦ Real-time fraud detection</span>
+            <span>✦ Explainable risk scoring</span>
+            <span>✦ Immutable audit trail</span>
+          </div>
         </div>
         <div className="signal-card" aria-hidden="true">
           <div><span>LIVE MONITORING</span><strong>Protected</strong></div>

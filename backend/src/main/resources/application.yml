@@ -2,7 +2,7 @@ spring:
   application:
     name: jadeguard-backend
   datasource:
-    url: ${JADEGUARD_DB_URL:jdbc:mysql://127.0.0.1:3307/jadeguard?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    url: ${JADEGUARD_DB_URL:jdbc:mysql://127.0.0.1:3306/jadeguard?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${JADEGUARD_DB_USER:jadeguard}
     password: ${JADEGUARD_DB_PASSWORD:jadeguard}
   jpa:

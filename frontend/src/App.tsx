@@ -5,6 +5,7 @@ import { RoleRoute } from "./auth/RoleRoute";
 import { RoleLanding } from "./auth/RoleLanding";
 import { AppShell } from "./components/layout/AppShell";
 import { LoginPage } from "./pages/LoginPage";
+import { WelcomePage } from "./pages/WelcomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { UnauthorizedPage } from "./pages/UnauthorizedPage";
 import { AlertQueuePage } from "./pages/AlertQueuePage";
@@ -24,6 +25,7 @@ import { WatchlistedAccountsPage } from "./pages/WatchlistedAccountsPage";
 export function App() {
   return (
     <Routes>
+      <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<RoleLanding />} />
