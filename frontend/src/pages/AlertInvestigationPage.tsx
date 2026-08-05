@@ -80,7 +80,35 @@ export function AlertInvestigationPage() {
   if (loading) return <LoadingState message="Loading investigation evidence…" />;
   if (fatalError || !alert) return <ErrorState title="Unable to open alert" message={fatalError || "Alert was not found."} onRetry={() => void load(false)} />;
 
-  return <section className="investigation-page"><div className="investigation-toolbar"><Link to="/alerts">← Alert queue</Link><div><span>{refreshing ? "Refreshing evidence…" : "Evidence loaded"}</span><button className="secondary-button" onClick={() => void load(true)} disabled={refreshing}>Refresh</button></div></div><AlertOverview alert={alert} />{user && <AlertActionPanel alert={alert} user={user} busy={actionBusy} error={actionError} success={actionSuccess} onAction={performAction} />}<div className="investigation-grid">{sectionErrors.transaction ? <SectionError title="Transaction unavailable" message={sectionErrors.transaction} /> : transaction && <TransactionSummary transaction={transaction} />}{sectionErrors.risk ? <SectionError title="Risk assessment unavailable" message={sectionErrors.risk} /> : assessment && <RiskBreakdown assessment={assessment} />}</div>{sectionErrors.flow ? <SectionError title="Fund flow unavailable" message={sectionErrors.flow} /> : flow && <CountryFlow flow={flow} assessment={assessment} />}{sectionErrors.history && <div className="background-error">History endpoint failed: {sectionErrors.history}. Showing embedded history when available.</div>}<AlertHistoryTimeline history={history} /></section>;
+  return <section className="investigation-page case-workspace-page">
+    <header className="case-toolbar">
+      <div>
+        <Link to="/alerts">← Alert queue</Link>
+        <span className="case-reference">Case {alert.id.slice(0, 8).toUpperCase()}</span>
+      </div>
+      <div className="case-sync-state">
+        <span className={refreshing ? "sync-pulse active" : "sync-pulse"} />
+        <span>{refreshing ? "Refreshing evidence…" : "Evidence synchronized"}</span>
+        <button className="secondary-button" onClick={() => void load(true)} disabled={refreshing}>Refresh case</button>
+      </div>
+    </header>
+    <div className="case-workspace">
+      <main className="case-evidence-column">
+        <AlertOverview alert={alert} />
+        <div className="case-section-heading"><span>01</span><div><p className="eyebrow">Evidence review</p><h2>Transaction and risk intelligence</h2></div></div>
+        <div className="investigation-grid evidence-grid">
+          {sectionErrors.transaction ? <SectionError title="Transaction unavailable" message={sectionErrors.transaction} /> : transaction && <TransactionSummary transaction={transaction} />}
+          {sectionErrors.risk ? <SectionError title="Risk assessment unavailable" message={sectionErrors.risk} /> : assessment && <RiskBreakdown assessment={assessment} />}
+        </div>
+        <div className="case-section-heading"><span>02</span><div><p className="eyebrow">Geographic evidence</p><h2>Route-of-funds intelligence</h2></div></div>
+        {sectionErrors.flow ? <SectionError title="Fund flow unavailable" message={sectionErrors.flow} /> : flow && <CountryFlow flow={flow} assessment={assessment} />}
+        <div className="case-section-heading"><span>03</span><div><p className="eyebrow">Chain of custody</p><h2>Immutable case history</h2></div></div>
+        {sectionErrors.history && <div className="background-error">History endpoint failed: {sectionErrors.history}. Showing embedded history when available.</div>}
+        <AlertHistoryTimeline history={history} />
+      </main>
+      <aside className="case-control-rail">{user && <AlertActionPanel alert={alert} user={user} busy={actionBusy} error={actionError} success={actionSuccess} onAction={performAction} />}</aside>
+    </div>
+  </section>;
 }
 
 function SectionError({ title, message }: { title: string; message: string }) { return <article className="investigation-card section-error"><span>!</span><div><strong>{title}</strong><p>{message}</p></div></article>; }
