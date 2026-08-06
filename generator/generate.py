@@ -18,13 +18,22 @@ import requests
 
 SCENARIOS = (
     "normal",
+    "domestic",
+    "cross_border",
+    "multi_currency",
     "high_amount",
     "high_risk_country",
+    "high_risk_origin",
+    "high_risk_intermediary",
+    "compound_critical",
     "multiple_countries",
+    "excessive_route",
     "rapid_transactions",
     "structuring",
     "blacklisted_account",
+    "blacklisted_receiver",
     "invalid_transaction",
+    "demo",
     "mixed",
 )
 
@@ -33,9 +42,80 @@ INVALID_VARIANTS = (
     "unsupported_currency",
     "invalid_country",
     "invalid_route_sequence",
+    "duplicate_route_sequence",
+    "missing_destination",
 )
 
-MIXED_SCENARIOS = SCENARIOS[:-1]
+MIXED_SCENARIOS = tuple(
+    scenario for scenario in SCENARIOS if scenario not in {"demo", "mixed"}
+)
+
+DEMO_SCENARIOS = (
+    "normal",
+    "domestic",
+    "cross_border",
+    "multi_currency",
+    "high_amount",
+    "high_risk_origin",
+    "high_risk_intermediary",
+    "compound_critical",
+    "excessive_route",
+    "rapid_transactions",
+    "rapid_transactions",
+    "rapid_transactions",
+    "rapid_transactions",
+    "rapid_transactions",
+    "rapid_transactions",
+    "structuring",
+    "structuring",
+    "structuring",
+    "structuring",
+    "blacklisted_account",
+    "blacklisted_receiver",
+    "invalid_transaction",
+)
+
+NORMAL_ROUTES = (
+    ("IN", "GB"),
+    ("US", "CA"),
+    ("DE", "NL"),
+    ("FR", "ES"),
+    ("JP", "SG"),
+    ("AU", "NZ"),
+    ("BR", "PT"),
+    ("ZA", "KE"),
+)
+
+CROSS_BORDER_ROUTES = (
+    ("IN", "AE", "GB"),
+    ("US", "IE", "DE"),
+    ("SG", "HK", "JP"),
+    ("BR", "US", "CA"),
+    ("ZA", "KE", "AE"),
+    ("AU", "SG", "IN"),
+)
+
+SUPPORTED_CURRENCY_CASES = (
+    ("INR", ("IN", "AE", "GB"), 18_500.00),
+    ("USD", ("US", "CA"), 7_250.00),
+    ("EUR", ("DE", "NL", "FR"), 6_800.00),
+    ("GBP", ("GB", "IE"), 5_900.00),
+    ("AED", ("AE", "IN"), 21_000.00),
+)
+
+HIGH_RISK_ROUTES = (
+    ("IN", "AE", "MM", "GB"),
+    ("US", "SG", "KP", "JP"),
+    ("DE", "TR", "MM", "AE"),
+    ("AU", "SG", "KP", "IN"),
+)
+
+EXCESSIVE_ROUTES = (
+    ("IN", "AE", "TR", "DE", "GB"),
+    ("US", "CA", "IS", "NO", "SE", "FI"),
+    ("BR", "PT", "ES", "FR", "NL", "DE"),
+    ("AU", "SG", "MY", "TH", "IN", "AE"),
+)
 
 
 @dataclass(frozen=True)
@@ -83,17 +163,49 @@ def transaction_for(
     receiver = f"ACC-DEST-{batch_id}-{index:04d}"
     amount = 5_000.00
     currency = "INR"
-    transaction_route = route("IN", "GB")
+    transaction_route = route(*NORMAL_ROUTES[index % len(NORMAL_ROUTES)])
 
-    if selected == "high_amount":
+    if selected == "domestic":
+        transaction_route = route("IN", "IN")
+        amount = 12_500.00
+    elif selected == "cross_border":
+        transaction_route = route(
+            *CROSS_BORDER_ROUTES[index % len(CROSS_BORDER_ROUTES)]
+        )
+    elif selected == "multi_currency":
+        currency, selected_route, amount = SUPPORTED_CURRENCY_CASES[
+            index % len(SUPPORTED_CURRENCY_CASES)
+        ]
+        transaction_route = route(*selected_route)
+    elif selected == "high_amount":
         amount = 250_000.00
     elif selected == "high_risk_country":
         # Amount plus watchlist country produces a HIGH score and an alert
         # with the current default rules.
         amount = 250_000.00
-        transaction_route = route("IN", "AE", "MM", "GB")
+        transaction_route = route(
+            *HIGH_RISK_ROUTES[index % len(HIGH_RISK_ROUTES)]
+        )
+    elif selected == "high_risk_origin":
+        amount = 250_000.00
+        transaction_route = route(
+            "MM" if index % 2 else "KP", "SG", "IN"
+        )
+    elif selected == "high_risk_intermediary":
+        amount = 250_000.00
+        transaction_route = route(
+            "IN", "MM" if index % 2 else "KP", "AE", "GB"
+        )
+    elif selected == "compound_critical":
+        # High amount (35) + watched country (40) + excessive hops (15) = 90.
+        amount = 250_000.00
+        transaction_route = route("IN", "AE", "MM", "DE", "GB")
     elif selected == "multiple_countries":
         transaction_route = route("IN", "AE", "DE", "FR", "GB")
+    elif selected == "excessive_route":
+        transaction_route = route(
+            *EXCESSIVE_ROUTES[index % len(EXCESSIVE_ROUTES)]
+        )
     elif selected == "rapid_transactions":
         sender = f"ACC-RAPID-{batch_id}"
     elif selected == "structuring":
@@ -102,6 +214,9 @@ def transaction_for(
     elif selected == "blacklisted_account":
         sender = "ACC-WATCHLIST-DEMO"
         amount = 250_000.00
+    elif selected == "blacklisted_receiver":
+        receiver = "ACC-WATCHLIST-DEMO"
+        amount = 75_000.00
     elif invalid_variant == "same_account":
         receiver = sender
     elif invalid_variant == "unsupported_currency":
@@ -121,6 +236,21 @@ def transaction_for(
                 "institution": "Destination Bank",
             },
         ]
+    elif invalid_variant == "duplicate_route_sequence":
+        transaction_route = [
+            {
+                "sequence": 1,
+                "countryCode": "IN",
+                "institution": "Origin Bank",
+            },
+            {
+                "sequence": 1,
+                "countryCode": "AE",
+                "institution": "Duplicate Sequence Bank",
+            },
+        ]
+    elif invalid_variant == "missing_destination":
+        transaction_route = route("IN")
 
     external_id = f"TXN-{batch_id}-{index:04d}-{uuid4().hex[:6].upper()}"
     payload = {
@@ -198,6 +328,9 @@ def print_result(
     payload = generated.payload
     print(f"Scenario: {generated.scenario}")
     print(f"External transaction ID: {payload['externalTransactionId']}")
+    print("Route: " + " → ".join(
+        hop["countryCode"] for hop in payload["route"]
+    ))
     print(f"HTTP status: {http_status}")
     if response_body is None or http_status >= 400:
         print("Validation status: UNKNOWN")
@@ -278,6 +411,8 @@ def main(argv: list[str] | None = None) -> int:
         selected = args.scenario
         if selected == "mixed":
             selected = random_generator.choice(MIXED_SCENARIOS)
+        elif selected == "demo":
+            selected = DEMO_SCENARIOS[(index - 1) % len(DEMO_SCENARIOS)]
         generated_transactions.append(
             transaction_for(selected, batch_id, index)
         )

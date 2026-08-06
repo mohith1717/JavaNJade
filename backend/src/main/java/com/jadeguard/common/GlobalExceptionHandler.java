@@ -222,6 +222,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpected(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
     private ResponseEntity<ApiError> error(
             HttpStatus status,
             String message,

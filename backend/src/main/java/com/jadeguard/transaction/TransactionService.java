@@ -113,10 +113,10 @@ public class TransactionService {
             ProcessingStatus processingStatus
     ) {
         if (processingStatus == null) {
-            return transactionRepository.findAllByOrderByCreatedAtDesc();
+            return transactionRepository.findAllByOrderByOccurredAtDesc();
         }
         return transactionRepository
-                .findByProcessingStatusOrderByCreatedAtDesc(processingStatus);
+                .findByProcessingStatusOrderByOccurredAtDesc(processingStatus);
     }
 
     @Transactional(readOnly = true)

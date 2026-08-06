@@ -2,7 +2,9 @@ package com.jadeguard.alert;
 
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,6 +84,16 @@ public class AlertService {
             String assignedTo,
             UUID transactionId
     ) {
+        Map<UUID, Instant> latestActivityByAlert = new HashMap<>();
+        historyRepository.findAll().forEach(history ->
+                latestActivityByAlert.merge(
+                        history.getAlertId(),
+                        history.getChangedAt(),
+                        (current, candidate) -> candidate.isAfter(current)
+                                ? candidate
+                                : current
+                )
+        );
         return alertRepository.findAllByOrderByCreatedAtDesc().stream()
                 .filter(alert -> status == null || alert.getStatus() == status)
                 .filter(alert -> priority == null
@@ -90,6 +102,13 @@ public class AlertService {
                         || assignedTo.equals(alert.getAssignedTo()))
                 .filter(alert -> transactionId == null
                         || transactionId.equals(alert.getTransactionId()))
+                .sorted(Comparator.comparing(
+                        alert -> latestActivityByAlert.getOrDefault(
+                                alert.getId(),
+                                alert.getCreatedAt()
+                        ),
+                        Comparator.reverseOrder()
+                ))
                 .map(this::toResponse)
                 .toList();
     }

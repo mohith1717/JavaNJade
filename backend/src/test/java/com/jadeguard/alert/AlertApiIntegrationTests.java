@@ -176,6 +176,28 @@ class AlertApiIntegrationTests {
     }
 
     @Test
+    void alertQueueOrdersByLatestLifecycleActivity() throws Exception {
+        saveHighAmountRule(65);
+        createTransaction("ALERT-OLDER-ASSIGNED", 250000);
+        UUID olderAlertId = alertRepository.findAll().getFirst().getId();
+        createTransaction("ALERT-NEWER-OPEN", 250000);
+
+        mockMvc.perform(post("/api/alerts/{id}/assign", olderAlertId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"assignedTo":"%s","reason":"Newest queue activity"}
+                                """.formatted(FRAUD_ID)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/alerts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id")
+                        .value(olderAlertId.toString()))
+                .andExpect(jsonPath("$[0].assignedTo")
+                        .value(FRAUD_ID.toString()));
+    }
+
+    @Test
     void invalidLifecycleTransitionReturnsConflict() throws Exception {
         saveHighAmountRule(65);
         createTransaction("ALERT-TXN-INVALID-TRANSITION", 250000);

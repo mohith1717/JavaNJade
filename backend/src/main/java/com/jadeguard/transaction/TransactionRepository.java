@@ -10,10 +10,10 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
 
     boolean existsByExternalTransactionId(String externalTransactionId);
 
-    List<TransactionEntity> findAllByOrderByCreatedAtDesc();
+    List<TransactionEntity> findAllByOrderByOccurredAtDesc();
 
     List<TransactionEntity>
-            findByProcessingStatusOrderByCreatedAtDesc(
+            findByProcessingStatusOrderByOccurredAtDesc(
                     ProcessingStatus processingStatus
             );
 
