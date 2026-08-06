@@ -9,7 +9,7 @@ export function AlertOverview({ alert }: { alert: AlertDetail }) {
     <div className="case-overview-copy">
       <div className="case-classification"><span>Automated detection</span><PriorityBadge priority={alert.priority} /><StatusBadge status={alert.status} /></div>
       <p className="eyebrow">Investigation brief</p>
-      <h1>{alert.primaryReason}</h1>
+      <h1>{alert.priority === "CRITICAL" ? "Critical transaction requires immediate review" : "Elevated transaction requires analyst review"}</h1>
       <div className="evidence-statement"><span>!</span><p><strong>Primary evidence</strong>{alert.primaryReason}</p></div>
     </div>
     <div className="case-risk-display">
