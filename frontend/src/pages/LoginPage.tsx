@@ -17,6 +17,12 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowIntro(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("session") === "expired") {
@@ -51,41 +57,49 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-page">
+    <main className="login-page login-experience">
+      {showIntro && <div className="login-logo-intro" aria-label="JadeGuard is loading" role="status">
+        <div className="intro-scan" />
+        <div className="intro-logo"><span>JG</span><i /><i /><i /></div>
+        <strong>JadeGuard</strong>
+        <small>Transaction intelligence</small>
+        <div className="intro-progress"><i /></div>
+      </div>}
       <section className="brand-panel" aria-label="JadeGuard introduction">
-        <div className="brand-lockup"><span className="brand-mark">JG</span><span>JadeGuard</span></div>
+        <div className="brand-lockup login-brand-lockup"><span className="brand-mark">JG</span><span>JadeGuard<small>Financial crime command center</small></span></div>
         <div className="brand-copy">
+          <div className="login-live-status"><i /> Monitoring network online</div>
           <p className="eyebrow">Transaction intelligence</p>
-          <h1>See the risk.<br />Trace the route.<br /><span>Act with confidence.</span></h1>
-          <p>Explainable monitoring for transactions, country flows and analyst decisions.</p>
+          <h1>Every transfer<br />leaves a <span>trail.</span></h1>
+          <p>Validate transactions, trace funds across borders and turn explainable risk into decisive action.</p>
         </div>
-        <div className="signal-card" aria-hidden="true">
-          <div><span>LIVE MONITORING</span><strong>Protected</strong></div>
-          <div className="signal-line"><i /><i /><i /><i /><i /><i /></div>
+        <div className="login-intelligence-strip" aria-hidden="true">
+          <div><span>01</span><strong>Validate</strong><small>Integrity checks</small></div>
+          <i>→</i><div><span>02</span><strong>Assess</strong><small>Explainable risk</small></div>
+          <i>→</i><div><span>03</span><strong>Investigate</strong><small>Analyst decision</small></div>
         </div>
       </section>
 
       <section className="login-panel">
         <div className="login-card">
-          <p className="eyebrow">Secure analyst access</p>
-          <h2>Welcome back</h2>
-          <p className="muted">Sign in with your JadeGuard development account.</p>
+          <header className="login-card-header"><span className="login-access-icon">◇</span><div><p className="eyebrow">Secure analyst access</p><h2>Enter the command center</h2></div></header>
+          <p className="muted">Use your authorized JadeGuard identity to continue.</p>
           {error && <div className="error-banner" role="alert">{error}</div>}
           <form onSubmit={handleSubmit}>
-            <label>Username or email
-              <input autoComplete="username" value={usernameOrEmail} onChange={(event) => setUsername(event.target.value)} placeholder="fraud1" required autoFocus />
+            <label><span>Username or email</span>
+              <div className="login-input-shell"><i aria-hidden="true">@</i><input autoComplete="username" value={usernameOrEmail} onChange={(event) => setUsername(event.target.value)} placeholder="fraud1" required autoFocus={!showIntro} /></div>
             </label>
-            <label>Password
-              <div className="password-field">
+            <label><span>Password</span>
+              <div className="password-field login-input-shell"><i aria-hidden="true">⌁</i>
                 <input type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required />
-                <button type="button" className="text-button" onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button>
+                <button type="button" className="text-button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button>
               </div>
             </label>
-            <button className="primary-button" type="submit" disabled={submitting}>{submitting ? <><span className="button-spinner" />Signing in…</> : "Enter JadeGuard"}</button>
+            <button className="primary-button login-submit" type="submit" disabled={submitting}>{submitting ? <><span className="button-spinner" />Signing in…</> : <><span>Enter JadeGuard</span><b>→</b></>}</button>
           </form>
-          <div className="security-note"><span>◆</span><p><strong>JWT protected session</strong><br />Your password is never stored in this browser.</p></div>
+          <div className="security-note"><span>◆</span><p><strong>Protected analyst session</strong><br />JWT authentication · role-based access · audited actions</p></div>
         </div>
-        <p className="login-footer">JadeGuard internal monitoring platform</p>
+        <p className="login-footer"><span /> JadeGuard internal monitoring platform</p>
       </section>
     </main>
   );
