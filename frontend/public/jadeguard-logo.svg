@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title description">
+  <title id="title">JadeGuard</title>
+  <desc id="description">A protective shield containing a transaction route and jade decision core.</desc>
+  <defs>
+    <linearGradient id="shield" x1="7" y1="5" x2="41" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#41E0C1"/>
+      <stop offset=".52" stop-color="#5D82F2"/>
+      <stop offset="1" stop-color="#A967F5"/>
+    </linearGradient>
+    <linearGradient id="jade" x1="18" y1="17" x2="31" y2="31" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8EFFE6"/>
+      <stop offset="1" stop-color="#22B99F"/>
+    </linearGradient>
+  </defs>
+  <path d="M24 3.8 40.2 9v12.4c0 10.4-6.1 18.1-16.2 23-10.1-4.9-16.2-12.6-16.2-23V9L24 3.8Z" fill="#0B101A" stroke="url(#shield)" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M13.7 17.2c4.2-5 9.4-3.4 10.2 1.1.9 5.1 6.6 6.8 10.5 2.2" fill="none" stroke="url(#shield)" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="13.5" cy="17.3" r="2.5" fill="#41E0C1"/>
+  <circle cx="34.7" cy="20.2" r="2.5" fill="#9B70F8"/>
+  <path d="m24 18 6.5 7L24 32l-6.5-7L24 18Z" fill="url(#jade)" stroke="#D8FFF7" stroke-width="1"/>
+  <path d="M16.2 34.1c2.1 1.9 4.7 3.6 7.8 5.2 3.1-1.6 5.7-3.3 7.8-5.2" fill="none" stroke="#7188F5" stroke-width="1.7" stroke-linecap="round" opacity=".85"/>
+</svg>
