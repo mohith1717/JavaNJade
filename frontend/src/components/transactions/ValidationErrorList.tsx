@@ -1,0 +1,7 @@
+import type { TransactionValidationError } from "../../types/transaction";
+
+export function ValidationErrorList({ errors }: { errors: TransactionValidationError[] }) {
+  return <article className={`investigation-card validation-card ${errors.length ? "validation-rejected" : "validation-passed"}`}><div className="card-heading"><div><p className="eyebrow">Validation outcome</p><h2>{errors.length ? "Transaction rejected" : "All controls passed"}</h2></div><span className={`validation-outcome-icon ${errors.length ? "rejected" : "passed"}`}>{errors.length ? "!" : "✓"}</span></div>{errors.length === 0 ? <div className="validation-success"><strong>Validated for risk assessment</strong><p>The transaction passed all required ingestion and route checks.</p></div> : <><p className="validation-rejection-summary">{errors.length} validation control{errors.length === 1 ? "" : "s"} prevented this transaction from entering risk assessment.</p><div className="validation-error-list">{errors.map((error, index) => <section key={error.id}><span>{String(index + 1).padStart(2, "0")}</span><div><div><code>{error.code}</code><time dateTime={error.createdAt}>{formatDate(error.createdAt)}</time></div><strong>{error.field}</strong><p>{error.message}</p></div></section>)}</div></>}</article>;
+}
+
+function formatDate(value: string) { return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
