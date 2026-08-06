@@ -6,7 +6,7 @@ export function ProtectedRoute() {
   const location = useLocation();
   if (isInitializing) return <FullPageLoader />;
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/welcome" replace state={{ from: location }} />;
   }
   return <Outlet />;
 }

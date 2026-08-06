@@ -16,7 +16,7 @@ export function WelcomePage() {
       <section className="welcome-hero">
         <div className="welcome-hero-bg" aria-hidden="true" />
         <div className="welcome-hero-content">
-          <p className="eyebrow">AI-Powered Financial Intelligence</p>
+          <p className="eyebrow">Transaction Monitoring & Alert Dashboard</p>
           <h1>
             Guard Every<br />
             <span>Transaction.</span><br />
