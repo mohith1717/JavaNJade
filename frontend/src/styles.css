@@ -293,6 +293,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .feature-card h3 { margin: 0 0 10px; font: 700 17px "Manrope", sans-serif; letter-spacing: -.02em; }
 .feature-card p { margin: 0; color: #9d9aaa; font-size: 14px; line-height: 1.65; }
 
+.welcome-how { padding: 100px 80px; background: linear-gradient(180deg, #07070a, #0c0b11, #07070a); }
+.how-steps { display: flex; align-items: flex-start; gap: 0; margin-top: 20px; }
+.how-step { flex: 1; padding: 32px 28px; border: 1px solid #2a2733; border-radius: 18px; background: linear-gradient(155deg, #17151e, #111018); }
+.how-step-number { font: 800 36px "Manrope", sans-serif; color: transparent; background: linear-gradient(90deg, #c369ff, #ff647f); background-clip: text; -webkit-background-clip: text; letter-spacing: -.04em; margin-bottom: 14px; }
+.how-step h3 { margin: 0 0 10px; font: 700 16px "Manrope", sans-serif; }
+.how-step p { margin: 0; color: #9d9aaa; font-size: 13px; line-height: 1.65; }
+.how-step-divider { flex: 0 0 40px; display: grid; place-items: center; color: #4a3f5c; font-size: 22px; margin-top: 48px; }
+
 .welcome-cta-banner { display: flex; align-items: center; justify-content: space-between; gap: 40px; padding: 80px; background: radial-gradient(circle at 30% 50%, rgba(141,44,255,.12), transparent 55%), linear-gradient(135deg, #100d18, #0b0a0e); border-top: 1px solid #1e1c26; border-bottom: 1px solid #1e1c26; }
 .welcome-cta-content { max-width: 560px; }
 .welcome-cta-content h2 { margin: 0 0 14px; font: 800 clamp(26px, 3.5vw, 42px)/1.15 "Manrope", sans-serif; letter-spacing: -.04em; }

@@ -77,6 +77,37 @@ export function WelcomePage() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section className="welcome-how">
+        <p className="eyebrow" style={{ textAlign: "center" }}>How It Works</p>
+        <h2 className="welcome-section-title">From transaction to resolution in seconds</h2>
+        <div className="how-steps">
+          <div className="how-step">
+            <div className="how-step-number">01</div>
+            <h3>Transaction Ingested</h3>
+            <p>Every transaction is captured and passed through the JadeGuard rule engine instantly.</p>
+          </div>
+          <div className="how-step-divider" aria-hidden="true">→</div>
+          <div className="how-step">
+            <div className="how-step-number">02</div>
+            <h3>Risk Scored</h3>
+            <p>A risk score is calculated based on amount, country, velocity, and watchlist matches.</p>
+          </div>
+          <div className="how-step-divider" aria-hidden="true">→</div>
+          <div className="how-step">
+            <div className="how-step-number">03</div>
+            <h3>Alert Generated</h3>
+            <p>High-risk transactions trigger alerts routed to the right analyst queue automatically.</p>
+          </div>
+          <div className="how-step-divider" aria-hidden="true">→</div>
+          <div className="how-step">
+            <div className="how-step-number">04</div>
+            <h3>Decision Logged</h3>
+            <p>Every analyst action is immutably recorded in the audit trail for full accountability.</p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Banner */}
       <section className="welcome-cta-banner">
         <div className="welcome-cta-content">
