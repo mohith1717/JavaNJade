@@ -16,7 +16,10 @@ public class SystemController {
         return Map.of(
                 "name", "JadeGuard API",
                 "status", "UP",
+                "login", "/api/auth/login",
                 "transactions", "/api/transactions",
+                "rules", "/api/rules",
+                "auditEvents", "/api/audit-events",
                 "validationErrors", "/api/validation-errors",
                 "health", "/api/health"
         );

@@ -24,3 +24,8 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+jadeguard:
+  security:
+    jwt-secret: ${JADEGUARD_JWT_SECRET:jadeguard-development-secret-change-me-2026}
+    jwt-expiration-seconds: ${JADEGUARD_JWT_EXPIRATION_SECONDS:3600}

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.jadeguard.validation.TransactionValidationErrorEntity;
+import com.jadeguard.risk.RiskAssessmentResponse;
+import com.jadeguard.risk.RiskAssessmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final FundFlowService fundFlowService;
+    private final RiskAssessmentService riskAssessmentService;
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(
+            TransactionService transactionService,
+            FundFlowService fundFlowService,
+            RiskAssessmentService riskAssessmentService
+    ) {
         this.transactionService = transactionService;
+        this.fundFlowService = fundFlowService;
+        this.riskAssessmentService = riskAssessmentService;
     }
 
     @PostMapping
@@ -53,6 +63,20 @@ public class TransactionController {
             @PathVariable UUID transactionId
     ) {
         return transactionService.getTransactionRoute(transactionId);
+    }
+
+    @GetMapping("/{transactionId}/fund-flow")
+    public FundFlowResponse getFundFlow(
+            @PathVariable UUID transactionId
+    ) {
+        return fundFlowService.getFundFlow(transactionId);
+    }
+
+    @GetMapping("/{transactionId}/risk-assessment")
+    public RiskAssessmentResponse getRiskAssessment(
+            @PathVariable UUID transactionId
+    ) {
+        return riskAssessmentService.getAssessment(transactionId);
     }
 
     @GetMapping("/{transactionId}/validation-errors")

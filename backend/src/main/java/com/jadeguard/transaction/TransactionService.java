@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import com.jadeguard.validation.TransactionValidationErrorEntity;
+import com.jadeguard.risk.RiskAssessmentService;
 import com.jadeguard.validation.TransactionValidationErrorRepository;
 import com.jadeguard.validation.TransactionValidationService;
 import com.jadeguard.validation.ValidationErrorCode;
@@ -19,17 +20,20 @@ public class TransactionService {
     private final TransactionRouteHopRepository routeHopRepository;
     private final TransactionValidationService validationService;
     private final TransactionValidationErrorRepository validationErrorRepository;
+    private final RiskAssessmentService riskAssessmentService;
 
     public TransactionService(
             TransactionRepository transactionRepository,
             TransactionRouteHopRepository routeHopRepository,
             TransactionValidationService validationService,
-            TransactionValidationErrorRepository validationErrorRepository
+            TransactionValidationErrorRepository validationErrorRepository,
+            RiskAssessmentService riskAssessmentService
     ) {
         this.transactionRepository = transactionRepository;
         this.routeHopRepository = routeHopRepository;
         this.validationService = validationService;
         this.validationErrorRepository = validationErrorRepository;
+        this.riskAssessmentService = riskAssessmentService;
     }
 
     @Transactional
@@ -82,6 +86,8 @@ public class TransactionService {
 
         if (validationResult.valid()) {
             transaction.markValidated();
+            transactionRepository.saveAndFlush(transaction);
+            return riskAssessmentService.assess(transaction);
         } else {
             transaction.markValidationFailed();
             Instant validationTime = Instant.now();

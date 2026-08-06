@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.jadeguard.validation.TransactionValidationErrorRepository;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
@@ -25,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @AutoConfigureMockMvc
+@WithMockUser(roles = "ADMIN")
 class TransactionApiIntegrationTests {
 
     private static final String VALID_TRANSACTION = """
@@ -70,7 +74,7 @@ class TransactionApiIntegrationTests {
     }
 
     @Test
-    void validTransactionIsStoredWithOrderedRouteAndPendingRisk()
+    void validTransactionIsStoredWithOrderedRouteAndAssessedRisk()
             throws Exception {
         var response = mockMvc.perform(post("/api/transactions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,9 +83,9 @@ class TransactionApiIntegrationTests {
                 .andExpect(jsonPath("$.externalTransactionId")
                         .value("TXN-TEST-001"))
                 .andExpect(jsonPath("$.currency").value("INR"))
-                .andExpect(jsonPath("$.processingStatus").value("VALIDATED"))
-                .andExpect(jsonPath("$.riskScore").doesNotExist())
-                .andExpect(jsonPath("$.riskLevel").value("PENDING"))
+                .andExpect(jsonPath("$.processingStatus").value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"))
                 .andReturn();
 
         String transactionId = com.jayway.jsonpath.JsonPath.read(
@@ -347,7 +351,7 @@ class TransactionApiIntegrationTests {
     }
 
     @Test
-    void highValueTransactionStillBecomesValidated() throws Exception {
+    void highValueTransactionIsAssessedAfterValidation() throws Exception {
         String transactionId = createAndReadId(
                 VALID_TRANSACTION
                         .replace("TXN-TEST-001", "TXN-HIGH-001")
@@ -357,9 +361,120 @@ class TransactionApiIntegrationTests {
         mockMvc.perform(get("/api/transactions/{id}", transactionId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.processingStatus")
-                        .value("VALIDATED"))
-                .andExpect(jsonPath("$.riskScore").doesNotExist())
-                .andExpect(jsonPath("$.riskLevel").value("PENDING"));
+                        .value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"));
+    }
+
+    @Test
+    void fundFlowReturnsVisualizationReadyCountryJourney()
+            throws Exception {
+        String transactionId = createAndReadId("""
+                {
+                  "externalTransactionId": "TXN-FLOW-001",
+                  "senderAccountId": "ACC-001",
+                  "receiverAccountId": "ACC-002",
+                  "amount": 250000,
+                  "currency": "INR",
+                  "occurredAt": "2026-07-31T08:30:00Z",
+                  "route": [
+                    {
+                      "sequence": 1,
+                      "countryCode": "IN",
+                      "institution": "Origin Bank"
+                    },
+                    {
+                      "sequence": 2,
+                      "countryCode": "AE",
+                      "institution": "Intermediary Bank"
+                    },
+                    {
+                      "sequence": 3,
+                      "countryCode": "GB",
+                      "institution": "Destination Bank"
+                    }
+                  ]
+                }
+                """);
+
+        mockMvc.perform(get(
+                        "/api/transactions/{id}/fund-flow",
+                        transactionId
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactionId")
+                        .value(transactionId))
+                .andExpect(jsonPath("$.externalTransactionId")
+                        .value("TXN-FLOW-001"))
+                .andExpect(jsonPath("$.amount").value(250000))
+                .andExpect(jsonPath("$.currency").value("INR"))
+                .andExpect(jsonPath("$.processingStatus")
+                        .value("ASSESSED"))
+                .andExpect(jsonPath("$.riskScore").value(0))
+                .andExpect(jsonPath("$.riskLevel").value("LOW"))
+                .andExpect(jsonPath("$.originCountry.countryCode")
+                        .value("IN"))
+                .andExpect(jsonPath("$.originCountry.countryName")
+                        .value("India"))
+                .andExpect(jsonPath("$.destinationCountry.countryCode")
+                        .value("GB"))
+                .andExpect(jsonPath("$.destinationCountry.countryName")
+                        .value("United Kingdom"))
+                .andExpect(jsonPath("$.totalHops").value(3))
+                .andExpect(jsonPath("$.route[0].hopType")
+                        .value("ORIGIN"))
+                .andExpect(jsonPath("$.route[1].hopType")
+                        .value("INTERMEDIARY"))
+                .andExpect(jsonPath("$.route[1].countryName")
+                        .value("United Arab Emirates"))
+                .andExpect(jsonPath("$.route[2].hopType")
+                        .value("DESTINATION"))
+                .andExpect(jsonPath("$.route[2].institution")
+                        .value("Destination Bank"));
+    }
+
+    @Test
+    void fundFlowHandlesLegacyTransactionWithoutRoute()
+            throws Exception {
+        UUID transactionId = UUID.randomUUID();
+        transactionRepository.save(new TransactionEntity(
+                transactionId,
+                "TXN-LEGACY-001",
+                "ACC-001",
+                "ACC-002",
+                new BigDecimal("1000.00"),
+                "INR",
+                Instant.parse("2026-07-31T08:30:00Z"),
+                ProcessingStatus.RECEIVED,
+                null,
+                RiskLevel.PENDING,
+                Instant.now()
+        ));
+
+        mockMvc.perform(get(
+                        "/api/transactions/{id}/fund-flow",
+                        transactionId
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transactionId")
+                        .value(transactionId.toString()))
+                .andExpect(jsonPath("$.totalHops").value(0))
+                .andExpect(jsonPath("$.originCountry").doesNotExist())
+                .andExpect(jsonPath("$.destinationCountry").doesNotExist())
+                .andExpect(jsonPath("$.route").isEmpty());
+    }
+
+    @Test
+    void fundFlowReturnsNotFoundForUnknownTransaction() throws Exception {
+        UUID unknownId = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/transactions/{id}/fund-flow", unknownId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message")
+                        .value("Transaction not found: " + unknownId))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/transactions/" + unknownId + "/fund-flow"));
     }
 
     private String createAndReadId(String body) throws Exception {
