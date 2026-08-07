@@ -32,6 +32,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
@@ -217,6 +218,19 @@ public class GlobalExceptionHandler {
         return error(
                 HttpStatus.BAD_REQUEST,
                 "Request contains malformed or incorrectly typed data",
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotAllowed(
+            HttpRequestMethodNotSupportedException exception,
+            HttpServletRequest request
+    ) {
+        return error(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                exception.getMessage(),
                 request.getRequestURI(),
                 Map.of()
         );
